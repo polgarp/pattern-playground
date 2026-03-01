@@ -21,34 +21,17 @@
     <h2>Pattern Playground</h2>
 
     <p>
-      An interactive browser-based tool for exploring repeating pattern methods
-      from Paul Jackson's book
-      <em>"How to Make Repeating Patterns."</em>
+      An interactive tool for exploring repeating pattern techniques from
+      Paul Jackson's
+      <a href="https://www.laurenceking.com/products/how-to-make-repeating-patterns" target="_blank" rel="noopener">
+        <em>"How to Make Repeating Patterns"</em></a>.
     </p>
 
     <p>
-      Select a font and letter, choose a pattern method, adjust its settings,
-      and see the result rendered live. Toggle between a single tile view and
-      a tiled preview to see how the pattern repeats. Export your designs as
-      SVG or PNG.
-    </p>
-
-    <h3>How to use</h3>
-    <ol>
-      <li>Pick a font from the dropdown and type a letter or short text.</li>
-      <li>Select a pattern method from the sidebar.</li>
-      <li>Adjust the method's settings to explore variations.</li>
-      <li>Use the tile margin slider to control spacing.</li>
-      <li>Toggle between Tile and Tiled views.</li>
-      <li>Export your pattern as SVG or PNG.</li>
-    </ol>
-
-    <h3>About the book</h3>
-    <p>
-      <em>"How to Make Repeating Patterns"</em> by Paul Jackson presents a
-      systematic exploration of pattern-making techniques. This playground
-      brings those methods to life, letting you experiment with them
-      interactively using any font and character.
+      Select a font and letter, choose a symmetry operation, adjust its
+      settings, and see the result rendered live. Toggle between a single
+      tile view and a tiled preview to see how the pattern repeats. Export
+      your designs as SVG or PNG.
     </p>
 
     <p class="footer">
@@ -109,29 +92,24 @@
     color: var(--accent);
   }
 
-  h3 {
-    margin-top: 16px;
-    margin-bottom: 6px;
-    border-bottom: none;
-    color: var(--text);
-  }
-
   p {
     font-size: 14px;
     line-height: 1.6;
     margin-bottom: 8px;
   }
 
-  ol {
-    font-size: 14px;
-    line-height: 1.8;
-    padding-left: 20px;
-    margin-bottom: 8px;
-  }
-
   em {
     color: var(--accent);
     font-style: italic;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
   }
 
   .footer {
