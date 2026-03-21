@@ -277,9 +277,9 @@
   .drag-handle {
     cursor: grab;
     color: var(--text-muted);
-    font-size: 11px;
-    letter-spacing: -2px;
-    padding: 2px 2px;
+    font-size: 14px;
+    letter-spacing: -3px;
+    padding: 6px 6px;
     user-select: none;
     line-height: 1;
     touch-action: none;

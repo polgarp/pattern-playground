@@ -58,12 +58,36 @@
     return result;
   });
 
-  // Generate tile positions for tiled view
-  let tilePositions = $derived.by(() => {
+  // Compute visible tile range based on viewport, pan, zoom, and rotation
+  let visibleTiles = $derived.by(() => {
     if ($viewMode !== 'tiled') return [{ x: 0, y: 0 }];
+
+    // Viewport half-sizes in pattern space (undo zoom)
+    const z = $zoom;
+    const rot = $rotation * Math.PI / 180;
+    const halfW = containerW / 2 / z;
+    const halfH = containerH / 2 / z;
+
+    // When rotated, the visible area in pattern space is larger
+    // Bounding box of rotated viewport
+    const cosR = Math.abs(Math.cos(rot));
+    const sinR = Math.abs(Math.sin(rot));
+    const boundsHalfW = halfW * cosR + halfH * sinR;
+    const boundsHalfH = halfW * sinR + halfH * cosR;
+
+    // Center of viewport in pattern space (undo pan and centering offset)
+    const cx = -$panX / z + svgW / 2;
+    const cy = -$panY / z + svgH / 2;
+
+    // Tile range with 1-tile margin
+    const colMin = Math.max(0, Math.floor((cx - boundsHalfW) / tileW) - 1);
+    const colMax = Math.min($tilesX - 1, Math.ceil((cx + boundsHalfW) / tileW) + 1);
+    const rowMin = Math.max(0, Math.floor((cy - boundsHalfH) / tileH) - 1);
+    const rowMax = Math.min($tilesY - 1, Math.ceil((cy + boundsHalfH) / tileH) + 1);
+
     const positions = [];
-    for (let row = 0; row < $tilesY; row++) {
-      for (let col = 0; col < $tilesX; col++) {
+    for (let row = rowMin; row <= rowMax; row++) {
+      for (let col = colMin; col <= colMax; col++) {
         positions.push({ x: col * tileW, y: row * tileH });
       }
     }
@@ -149,43 +173,40 @@
     viewBox="{-containerW/2} {-containerH/2} {containerW} {containerH}"
     xmlns="http://www.w3.org/2000/svg"
   >
+    <!-- Define the motif once -->
+    <defs>
+      <symbol id="motif" overflow="visible">
+        <text
+          x={textX}
+          y={textY}
+          font-family="'{$selectedFont}', sans-serif"
+          font-size={$fontSize}
+          fill="#1a1a1a"
+          text-anchor="middle"
+        >{$letterInput}</text>
+      </symbol>
+      <!-- A single tile with all transforms applied -->
+      <symbol id="tile" overflow="visible">
+        {#each transforms as t}
+          <g transform={t.transform}>
+            <use href="#motif" />
+          </g>
+        {/each}
+      </symbol>
+    </defs>
+
     <g transform="translate({$panX}, {$panY}) scale({$zoom}) rotate({$rotation})">
       <!-- Center the pattern -->
       <g transform="translate({-svgW/2}, {-svgH/2})">
 
         {#if $viewMode === 'tiled'}
           <g>
-            {#each tilePositions as pos}
-              <g transform="translate({pos.x}, {pos.y})">
-                {#each transforms as t}
-                  <g transform={t.transform}>
-                    <text
-                      x={textX}
-                      y={textY}
-                      font-family="'{$selectedFont}', sans-serif"
-                      font-size={$fontSize}
-                      fill="#1a1a1a"
-                      text-anchor="middle"
-                    >{$letterInput}</text>
-                  </g>
-                {/each}
-              </g>
+            {#each visibleTiles as pos}
+              <use href="#tile" x={pos.x} y={pos.y} />
             {/each}
           </g>
         {:else}
-          <!-- Single tile view -->
-          {#each transforms as t}
-            <g transform={t.transform}>
-              <text
-                x={textX}
-                y={textY}
-                font-family="'{$selectedFont}', sans-serif"
-                font-size={$fontSize}
-                fill="#1a1a1a"
-                text-anchor="middle"
-              >{$letterInput}</text>
-            </g>
-          {/each}
+          <use href="#tile" />
         {/if}
 
         <!-- Guides -->
