@@ -2,6 +2,7 @@
   import {
     viewMode,
     zoom,
+    rotation,
     showGuides,
     tilesX,
     tilesY,
@@ -75,6 +76,14 @@
     <span class="zoom-val">{Math.round($zoom * 100)}%</span>
     <button onclick={zoomIn}>+</button>
     <button onclick={zoomReset}>Reset</button>
+  </div>
+</div>
+
+<div class="control-group">
+  <label for="canvas-rotation">Rotation: {$rotation}°</label>
+  <div class="control-row">
+    <input id="canvas-rotation" type="range" min="0" max="359" value={$rotation} oninput={(e) => $rotation = Number(e.target.value)} />
+    <button onclick={() => $rotation = 0}>Reset</button>
   </div>
 </div>
 

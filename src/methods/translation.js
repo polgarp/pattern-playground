@@ -1,7 +1,7 @@
 export const translation = {
   id: 'translation',
   name: 'Translation',
-  category: 'Translation Symmetry',
+  category: 'Basic Symmetry Operations',
   description: 'Repeats the motif offset by a distance',
   configSchema: [
     {
@@ -9,8 +9,8 @@ export const translation = {
       label: 'Horizontal Offset',
       type: 'range',
       default: 0.5,
-      min: -1,
-      max: 1,
+      min: -5,
+      max: 5,
       step: 0.01,
     },
     {
@@ -18,8 +18,8 @@ export const translation = {
       label: 'Vertical Offset',
       type: 'range',
       default: 0,
-      min: -1,
-      max: 1,
+      min: -5,
+      max: 5,
       step: 0.01,
     },
     {
@@ -31,16 +31,30 @@ export const translation = {
       max: 6,
       step: 1,
     },
+    {
+      key: 'elementRotation',
+      label: 'Element rotation',
+      type: 'range',
+      default: 0,
+      min: -180,
+      max: 180,
+      step: 1,
+    },
   ],
   getTransforms(config, tileW, tileH) {
     const dx = config.dx ?? 0.5;
     const dy = config.dy ?? 0;
     const copies = config.copies ?? 1;
+    const elemRot = config.elementRotation ?? 0;
+    const cx = tileW / 2;
+    const cy = tileH / 2;
 
-    const transforms = [{ transform: '' }];
+    const transforms = [{ transform: elemRot ? `rotate(${elemRot}, ${cx}, ${cy})` : '' }];
     for (let i = 1; i <= copies; i++) {
+      const tx = i * dx * tileW;
+      const ty = i * dy * tileH;
       transforms.push({
-        transform: `translate(${i * dx * tileW}, ${i * dy * tileH})`,
+        transform: `translate(${tx}, ${ty})${elemRot ? ` rotate(${elemRot}, ${cx}, ${cy})` : ''}`,
       });
     }
     return transforms;

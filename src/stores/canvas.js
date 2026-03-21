@@ -4,6 +4,7 @@ export const viewMode = writable('tiled'); // 'tile' or 'tiled'
 export const zoom = writable(1);
 export const panX = writable(0);
 export const panY = writable(0);
+export const rotation = writable(0);
 export const showGuides = writable(false);
 export const tilesX = writable(5);
 export const tilesY = writable(5);

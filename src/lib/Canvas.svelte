@@ -1,13 +1,14 @@
 <script>
   import { selectedFont, fontSize, letterInput, fontLoaded } from '../stores/fonts.js';
-  import { viewMode, zoom, panX, panY, showGuides, tilesX, tilesY, paddingX, paddingY, measureText } from '../stores/canvas.js';
-  import { selectedMethod, methodConfig } from '../stores/methods.js';
+  import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY, measureText } from '../stores/canvas.js';
+  import { operationChain, methodRegistry } from '../stores/methods.js';
   import { onMount } from 'svelte';
 
   let containerEl = $state(null);
   let containerW = $state(800);
   let containerH = $state(600);
   let isPanning = $state(false);
+  let isRotating = $state(false);
   let lastMouse = $state({ x: 0, y: 0 });
 
   // Measure actual text dimensions, re-measure when font/text/size/fontLoaded changes
@@ -29,14 +30,32 @@
   let svgW = $derived($viewMode === 'tiled' ? tileW * $tilesX : tileW);
   let svgH = $derived($viewMode === 'tiled' ? tileH * $tilesY : tileH);
 
-  // Get method transforms
+  // Compose transforms from the operation chain via cartesian product
   let transforms = $derived.by(() => {
-    if (!$selectedMethod) return [{ transform: '' }];
-    try {
-      return $selectedMethod.getTransforms($methodConfig, tileW, tileH);
-    } catch {
-      return [{ transform: '' }];
+    const chain = $operationChain;
+    const registry = $methodRegistry;
+    if (chain.length === 0) return [{ transform: '' }];
+
+    let result = [{ transform: '' }];
+    for (const op of chain) {
+      const method = registry.find(m => m.id === op.methodId);
+      if (!method) continue;
+      let stepTransforms;
+      try {
+        stepTransforms = method.getTransforms(op.config, tileW, tileH);
+      } catch {
+        continue;
+      }
+      const next = [];
+      for (const existing of result) {
+        for (const step of stepTransforms) {
+          const combined = `${step.transform} ${existing.transform}`.trim();
+          next.push({ transform: combined });
+        }
+      }
+      result = next;
     }
+    return result;
   });
 
   // Generate tile positions for tiled view
@@ -82,18 +101,33 @@
       isPanning = true;
       lastMouse = { x: e.clientX, y: e.clientY };
       e.currentTarget.setPointerCapture(e.pointerId);
+    } else if (e.button === 2) {
+      isRotating = true;
+      lastMouse = { x: e.clientX, y: e.clientY };
+      e.currentTarget.setPointerCapture(e.pointerId);
     }
   }
 
   function onPointerMove(e) {
-    if (!isPanning) return;
-    $panX += e.clientX - lastMouse.x;
-    $panY += e.clientY - lastMouse.y;
-    lastMouse = { x: e.clientX, y: e.clientY };
+    if (isPanning) {
+      $panX += e.clientX - lastMouse.x;
+      $panY += e.clientY - lastMouse.y;
+      lastMouse = { x: e.clientX, y: e.clientY };
+    } else if (isRotating) {
+      const rect = containerEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const prevAngle = Math.atan2(lastMouse.y - cy, lastMouse.x - cx);
+      const currAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+      const delta = (currAngle - prevAngle) * (180 / Math.PI);
+      $rotation = Math.round((($rotation + delta) % 360 + 360) % 360);
+      lastMouse = { x: e.clientX, y: e.clientY };
+    }
   }
 
   function onPointerUp() {
     isPanning = false;
+    isRotating = false;
   }
 </script>
 
@@ -105,6 +139,7 @@
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
+  oncontextmenu={(e) => e.preventDefault()}
   role="img"
   aria-label="Pattern canvas"
 >
@@ -114,7 +149,7 @@
     viewBox="{-containerW/2} {-containerH/2} {containerW} {containerH}"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <g transform="translate({$panX}, {$panY}) scale({$zoom})">
+    <g transform="translate({$panX}, {$panY}) scale({$zoom}) rotate({$rotation})">
       <!-- Center the pattern -->
       <g transform="translate({-svgW/2}, {-svgH/2})">
 

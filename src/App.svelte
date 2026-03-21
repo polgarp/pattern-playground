@@ -2,15 +2,29 @@
   import Sidebar from './lib/Sidebar.svelte';
   import Canvas from './lib/Canvas.svelte';
   import AboutModal from './lib/AboutModal.svelte';
-  import { fetchFontList, pickRandomFont } from './stores/fonts.js';
+  import { fetchFontList, pickRandomFont, loadFont, selectedFont } from './stores/fonts.js';
   import { initMethods } from './methods/index.js';
+  import { initUrlState } from './stores/urlState.js';
   import { onMount } from 'svelte';
 
   let aboutOpen = $state(false);
 
-  onMount(() => {
-    fetchFontList().then(() => pickRandomFont());
+  onMount(async () => {
+    await fetchFontList();
     initMethods();
+
+    // If URL hash has state, restore it; otherwise pick a random font
+    const hasHash = window.location.hash.length > 1;
+    initUrlState();
+
+    if (hasHash) {
+      // Load the font that was restored from the hash
+      let font;
+      selectedFont.subscribe(v => font = v)();
+      await loadFont(font);
+    } else {
+      pickRandomFont();
+    }
   });
 </script>
 

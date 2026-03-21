@@ -1,7 +1,7 @@
 export const rotation = {
   id: 'rotation',
   name: 'Rotation',
-  category: 'Rotation Symmetry',
+  category: 'Basic Symmetry Operations',
   description: 'Rotates the motif around a point with configurable order',
   configSchema: [
     {

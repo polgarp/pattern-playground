@@ -1,7 +1,7 @@
 export const glideReflection = {
   id: 'glideReflection',
   name: 'Glide Reflection',
-  category: 'Glide Reflection Symmetry',
+  category: 'Basic Symmetry Operations',
   description: 'Reflects the motif and translates it along the reflection axis',
   configSchema: [
     {
@@ -16,36 +16,54 @@ export const glideReflection = {
     },
     {
       key: 'glideDistance',
-      label: 'Glide Distance',
+      label: 'Translation distance',
       type: 'range',
       default: 0.5,
-      min: 0,
-      max: 1,
+      min: -5,
+      max: 5,
       step: 0.01,
+    },
+    {
+      key: 'reflectionDistance',
+      label: 'Reflection distance',
+      type: 'range',
+      default: 1,
+      min: -5,
+      max: 5,
+      step: 0.01,
+    },
+    {
+      key: 'elementRotation',
+      label: 'Element rotation',
+      type: 'range',
+      default: 0,
+      min: -180,
+      max: 180,
+      step: 1,
     },
   ],
   getTransforms(config, tileW, tileH) {
     const axis = config.axis ?? 'horizontal';
-    const glideDistance = config.glideDistance ?? 0.5;
+    const refDist = config.reflectionDistance ?? 1;
+    const glideDist = config.glideDistance ?? 0.5;
+    const elemRot = config.elementRotation ?? 0;
 
-    const original = { transform: '' };
+    const cx = tileW / 2;
+    const cy = tileH / 2;
+    const rot = elemRot ? ` rotate(${elemRot}, ${cx}, ${cy})` : '';
 
     if (axis === 'horizontal') {
-      // Reflect across horizontal center, then translate along x
-      const tx = glideDistance * tileW;
       return [
-        original,
+        { transform: rot.trim() || '' },
         {
-          transform: `translate(${tx}, ${tileH}) scale(1, -1)`,
+          transform: `translate(${glideDist * tileW}, ${refDist * tileH}) scale(1, -1)${rot}`,
         },
       ];
     } else {
-      // Reflect across vertical center, then translate along y
-      const ty = glideDistance * tileH;
       return [
-        original,
+        { transform: rot.trim() || '' },
         {
-          transform: `translate(${tileW}, ${ty}) scale(-1, 1)`,
+          transform: `translate(${refDist * tileW}, ${glideDist * tileH}) scale(-1, 1)${rot}`,
         },
       ];
     }
