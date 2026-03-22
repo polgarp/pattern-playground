@@ -39,7 +39,7 @@ export function addOperation(methodId) {
   operationChain.update(chain => {
     if (chain.length >= MAX_OPERATIONS) return chain;
     const method = get(methodRegistry).find(m => m.id === methodId);
-    return [...chain, { methodId, config: getDefaultConfig(method) }];
+    return [...chain, { methodId, config: getDefaultConfig(method), enabled: true }];
   });
 }
 
@@ -61,6 +61,14 @@ export function moveOperation(fromIndex, toIndex) {
     const newChain = [...chain];
     const [item] = newChain.splice(fromIndex, 1);
     newChain.splice(toIndex, 0, item);
+    return newChain;
+  });
+}
+
+export function toggleOperationEnabled(index) {
+  operationChain.update(chain => {
+    const newChain = [...chain];
+    newChain[index] = { ...newChain[index], enabled: !(newChain[index].enabled ?? true) };
     return newChain;
   });
 }

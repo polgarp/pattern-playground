@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { selectedFont, fontSize, letterInput } from './fonts.js';
-import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY } from './canvas.js';
+import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew } from './canvas.js';
 import { operationChain } from './methods.js';
 
 // Define all params with their store, type, and default value
@@ -18,6 +18,9 @@ const params = [
   { key: 'ty', store: tilesY, type: 'number' },
   { key: 'padx', store: paddingX, type: 'number' },
   { key: 'pady', store: paddingY, type: 'number' },
+  { key: 'roff', store: rowOffset, type: 'number' },
+  { key: 'coff', store: colOffset, type: 'number' },
+  { key: 'skew', store: tileSkew, type: 'number' },
 ];
 
 function parseValue(raw, type) {

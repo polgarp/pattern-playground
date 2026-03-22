@@ -1,11 +1,18 @@
 <script>
   let { method, config, onupdate } = $props();
 
-  function snapToZero(value, field) {
-    if (field.min < 0 && field.max > 0) {
-      const range = field.max - field.min;
-      const threshold = range * 0.015;
-      if (Math.abs(value) < threshold) return 0;
+  function snap(value, field) {
+    const range = field.max - field.min;
+    const threshold = range * 0.015;
+    // Snap to zero for ranges crossing zero
+    if (field.min < 0 && field.max > 0 && Math.abs(value) < threshold) return 0;
+    // Snap to custom snap points (static or dynamic from config)
+    if (field.snap != null) {
+      const raw = typeof field.snap === 'function' ? field.snap(config) : field.snap;
+      const points = Array.isArray(raw) ? raw : [raw];
+      for (const p of points) {
+        if (Math.abs(value - p) < threshold) return p;
+      }
     }
     return value;
   }
@@ -34,8 +41,8 @@
           step={field.step ?? 1}
           value={config[field.key] ?? field.default}
           oninput={(e) => {
-            const v = snapToZero(Number(e.target.value), field);
-            if (v === 0) e.target.value = 0;
+            const v = snap(Number(e.target.value), field);
+            if (v !== Number(e.target.value)) e.target.value = v;
             onupdate(field.key, v);
           }}
         />

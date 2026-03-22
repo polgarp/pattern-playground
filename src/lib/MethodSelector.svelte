@@ -6,9 +6,31 @@
     removeOperation,
     updateOperationConfig,
     moveOperation,
+    toggleOperationEnabled,
     MAX_OPERATIONS,
   } from '../stores/methods.js';
+  import {
+    viewMode,
+    showGuides,
+    tilesX,
+    tilesY,
+    paddingX,
+    paddingY,
+    rowOffset,
+    colOffset,
+    tileSkew,
+  } from '../stores/canvas.js';
   import ConfigPanel from './ConfigPanel.svelte';
+
+  let tilingExpanded = $state(true);
+
+  function snapOffset(value) {
+    const threshold = 0.03;
+    if (Math.abs(value) < threshold) return 0;
+    if (Math.abs(value - 0.5) < threshold) return 0.5;
+    if (Math.abs(value + 0.5) < threshold) return -0.5;
+    return value;
+  }
 
   let expandedSteps = $state({});
   let stepEls = $state([]);
@@ -177,6 +199,7 @@
       {/if}
       <div
         class="chain-step {getStepClass(index)}"
+        class:step-disabled={!(op.enabled ?? true)}
         bind:this={stepEls[index]}
       >
         <div class="step-header">
@@ -188,6 +211,23 @@
           <button class="step-toggle" onclick={() => toggleStep(index)}>
             <span class="arrow">{expandedSteps[index] ? '▾' : '▸'}</span>
             <span class="step-label">Step {index + 1}: {method?.name ?? 'Unknown'}</span>
+          </button>
+          <button
+            class="visibility-btn"
+            class:off={!(op.enabled ?? true)}
+            onclick={() => toggleOperationEnabled(index)}
+            aria-label={(op.enabled ?? true) ? 'Hide operation' : 'Show operation'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              {#if op.enabled ?? true}
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              {:else}
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="2" y1="2" x2="22" y2="22"/>
+              {/if}
+            </svg>
           </button>
           <button class="remove-btn" onclick={() => removeOperation(index)} aria-label="Remove step">x</button>
         </div>
@@ -222,6 +262,71 @@
       </div>
     </div>
   {/if}
+
+  <!-- Permanent Tiling step -->
+  <div class="chain-step tiling-step">
+    <div class="step-header">
+      <button class="step-toggle" onclick={() => tilingExpanded = !tilingExpanded}>
+        <span class="arrow">{tilingExpanded ? '▾' : '▸'}</span>
+        <span class="step-label">Tiling</span>
+      </button>
+    </div>
+
+    {#if tilingExpanded}
+      <div class="step-body">
+        <div class="control-row">
+          <button class:active={$viewMode === 'tile'} onclick={() => $viewMode = 'tile'}>
+            Single
+          </button>
+          <button class:active={$viewMode === 'tiled'} onclick={() => $viewMode = 'tiled'}>
+            Tiled
+          </button>
+        </div>
+
+        <label class="toggle-label">
+          <input type="checkbox" bind:checked={$showGuides} />
+          Show guides
+        </label>
+
+        <div class="control-group">
+          <label for="padding-x">Horizontal padding: {$paddingX}px</label>
+          <input id="padding-x" type="range" min="-50" max="100" bind:value={$paddingX} />
+        </div>
+
+        <div class="control-group">
+          <label for="padding-y">Vertical padding: {$paddingY}px</label>
+          <input id="padding-y" type="range" min="-50" max="100" bind:value={$paddingY} />
+        </div>
+
+        {#if $viewMode === 'tiled'}
+          <div class="control-group">
+            <label for="tiles-x">Horizontal tiles: {$tilesX}</label>
+            <input id="tiles-x" type="range" min="1" max="20" bind:value={$tilesX} />
+          </div>
+
+          <div class="control-group">
+            <label for="tiles-y">Vertical tiles: {$tilesY}</label>
+            <input id="tiles-y" type="range" min="1" max="20" bind:value={$tilesY} />
+          </div>
+
+          <div class="control-group">
+            <label for="row-offset">Row offset: {Math.round($rowOffset * 100)}%</label>
+            <input id="row-offset" type="range" min="-1" max="1" step="0.01" value={$rowOffset} oninput={(e) => $rowOffset = snapOffset(Number(e.target.value))} />
+          </div>
+
+          <div class="control-group">
+            <label for="col-offset">Column offset: {Math.round($colOffset * 100)}%</label>
+            <input id="col-offset" type="range" min="-1" max="1" step="0.01" value={$colOffset} oninput={(e) => $colOffset = snapOffset(Number(e.target.value))} />
+          </div>
+
+          <div class="control-group">
+            <label for="tile-skew">Skew: {Math.round($tileSkew * 100)}%</label>
+            <input id="tile-skew" type="range" min="-1" max="1" step="0.01" value={$tileSkew} oninput={(e) => $tileSkew = snapOffset(Number(e.target.value))} />
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </div>
 {/if}
 
 <style>
@@ -323,6 +428,34 @@
     color: var(--text);
   }
 
+  .step-disabled .step-label {
+    color: var(--text-muted);
+  }
+
+  .step-disabled .step-header {
+    opacity: 0.6;
+  }
+
+  .visibility-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .visibility-btn:hover {
+    color: var(--accent);
+    background: none;
+  }
+
+  .visibility-btn.off {
+    opacity: 0.4;
+  }
+
   .remove-btn {
     font-size: 12px;
     padding: 0 6px;
@@ -381,5 +514,36 @@
     border-color: var(--accent);
     color: var(--accent);
     background: var(--bg-input);
+  }
+
+  .tiling-step {
+    border-style: solid;
+    border-color: var(--accent);
+    border-width: 1px;
+  }
+
+  .tiling-step .step-header {
+    padding-left: 12px;
+  }
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    text-transform: none;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .control-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .control-row button.active {
+    background: var(--accent);
+    color: #fff;
   }
 </style>

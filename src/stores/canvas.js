@@ -10,6 +10,9 @@ export const tilesX = writable(5);
 export const tilesY = writable(5);
 export const paddingX = writable(10);
 export const paddingY = writable(10);
+export const rowOffset = writable(0);
+export const colOffset = writable(0);
+export const tileSkew = writable(0);
 export const exportWidth = writable(2048);
 export const exportHeight = writable(2048);
 

@@ -6,11 +6,30 @@ export const rotation = {
   configSchema: [
     {
       key: 'order',
-      label: 'Order',
+      label: 'Copies',
       type: 'range',
       default: 2,
-      min: 2,
+      min: 1,
       max: 36,
+      step: 1,
+    },
+    {
+      key: 'angle',
+      label: 'Angle',
+      type: 'range',
+      default: 180,
+      min: 0,
+      max: 360,
+      step: 1,
+      snap: (cfg) => 360 / (cfg.order ?? 2),
+    },
+    {
+      key: 'startAngle',
+      label: 'Start Angle',
+      type: 'range',
+      default: 0,
+      min: 0,
+      max: 360,
       step: 1,
     },
     {
@@ -34,9 +53,12 @@ export const rotation = {
   ],
   getTransforms(config, tileW, tileH) {
     const order = config.order ?? 2;
+    const angle = config.angle ?? 180;
+    const startAngle = config.startAngle ?? 0;
     const distance = config.distance ?? 0;
     const pointAngle = config.pointAngle ?? 0;
-    const angleStep = 360 / order;
+
+    const angleStep = angle;
 
     // Rotation point relative to tile
     const rad = (pointAngle * Math.PI) / 180;
@@ -45,13 +67,12 @@ export const rotation = {
 
     const transforms = [];
     for (let i = 0; i < order; i++) {
-      const angle = i * angleStep;
-      if (angle === 0) {
+      const a = startAngle + i * angleStep;
+      if (a === 0) {
         transforms.push({ transform: '' });
       } else {
-        // Rotate around (cx, cy): translate to origin, rotate, translate back
         transforms.push({
-          transform: `translate(${cx}, ${cy}) rotate(${angle}) translate(${-cx}, ${-cy})`,
+          transform: `translate(${cx}, ${cy}) rotate(${a}) translate(${-cx}, ${-cy})`,
         });
       }
     }
