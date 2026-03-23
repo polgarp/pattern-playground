@@ -28,10 +28,17 @@
     </p>
 
     <p>
-      Select a font and letter, choose a symmetry operation, adjust its
-      settings, and see the result rendered live. Toggle between a single
-      tile view and a tiled preview to see how the pattern repeats. Export
-      your designs as SVG or PNG.
+      Choose a motif &mdash; type a letter with any Google Font, or upload an SVG.
+      Build a pattern pipeline by chaining symmetry operations (rotation,
+      translation, reflection, glide reflection), then tile the result with
+      adjustable padding, row/column offsets, and skew. Reorder, toggle, or
+      remove steps at any time.
+    </p>
+
+    <p>
+      Export your designs as SVG or PNG, or copy embed-friendly SVG to your
+      clipboard. Pan with left-click, rotate the canvas with right-click,
+      and zoom with the scroll wheel.
     </p>
 
     <p class="footer">
