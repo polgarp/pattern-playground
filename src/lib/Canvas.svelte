@@ -2,6 +2,7 @@
   import { selectedFont, fontSize, letterInput, fontLoaded, motifType, svgMotif } from '../stores/fonts.js';
   import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
   import { operationChain, methodRegistry } from '../stores/methods.js';
+  import CanvasControls from './CanvasControls.svelte';
   import { onMount } from 'svelte';
 
   let containerEl = $state(null);
@@ -333,6 +334,7 @@
       </g>
     </g>
   </svg>
+  <CanvasControls />
 </div>
 
 <style>
@@ -341,6 +343,7 @@
     height: 100%;
     cursor: grab;
     background: #ffffff;
+    position: relative;
   }
 
   .canvas-container:active {

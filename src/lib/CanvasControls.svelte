@@ -2,78 +2,247 @@
   import {
     zoom,
     rotation,
-    exportWidth,
-    exportHeight,
+    panX,
+    panY,
   } from '../stores/canvas.js';
-  import { exportSVG, exportPNG, copySVG } from './export.js';
 
-  let copyLabel = $state('Copy SVG');
-  async function handleCopy() {
-    await copySVG();
-    copyLabel = 'Copied!';
-    setTimeout(() => copyLabel = 'Copy SVG', 1500);
+  let zoomTarget = null;
+  let zoomRaf = null;
+  let rotTarget = null;
+  let rotRaf = null;
+
+  const LERP = 0.08;
+  const EPSILON = 0.01;
+
+  let zoomCurrent = null;
+  let rotCurrent = null;
+
+  function tickZoom() {
+    if (zoomTarget === null) return;
+    if (zoomCurrent === null) zoomCurrent = $zoom;
+    const diff = zoomTarget - zoomCurrent;
+    if (Math.abs(diff) < EPSILON * 0.01) {
+      // Adjust pan to keep viewport center fixed
+      const ratio = zoomTarget / zoomCurrent;
+      $panX *= ratio;
+      $panY *= ratio;
+      $zoom = zoomTarget;
+      zoomTarget = null;
+      zoomCurrent = null;
+      zoomRaf = null;
+      return;
+    }
+    const prevZoom = zoomCurrent;
+    zoomCurrent += diff * LERP;
+    // Adjust pan to keep viewport center fixed
+    const ratio = zoomCurrent / prevZoom;
+    $panX *= ratio;
+    $panY *= ratio;
+    $zoom = zoomCurrent;
+    zoomRaf = requestAnimationFrame(tickZoom);
   }
 
-  function zoomIn() { $zoom = Math.min($zoom * 1.2, 5); }
-  function zoomOut() { $zoom = Math.max($zoom / 1.2, 0.1); }
-  function zoomReset() { $zoom = 1; }
+  function tickRotation() {
+    if (rotTarget === null) return;
+    if (rotCurrent === null) rotCurrent = $rotation;
+    let diff = rotTarget - rotCurrent;
+    // Shortest path around the circle
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    if (Math.abs(diff) < EPSILON) {
+      // Adjust pan to keep viewport center fixed
+      const delta = (rotTarget - rotCurrent) * Math.PI / 180;
+      const cos = Math.cos(delta), sin = Math.sin(delta);
+      const px = $panX, py = $panY;
+      $panX = px * cos - py * sin;
+      $panY = px * sin + py * cos;
+      $rotation = ((rotTarget % 360) + 360) % 360;
+      rotTarget = null;
+      rotCurrent = null;
+      rotRaf = null;
+      return;
+    }
+    const prevRot = rotCurrent;
+    rotCurrent += diff * LERP;
+    // Adjust pan to keep viewport center fixed
+    const delta = (rotCurrent - prevRot) * Math.PI / 180;
+    const cos = Math.cos(delta), sin = Math.sin(delta);
+    const px = $panX, py = $panY;
+    $panX = px * cos - py * sin;
+    $panY = px * sin + py * cos;
+    $rotation = ((rotCurrent % 360) + 360) % 360;
+    rotRaf = requestAnimationFrame(tickRotation);
+  }
+
+  function animateZoom(target) {
+    zoomCurrent = zoomCurrent ?? $zoom;
+    zoomTarget = target;
+    if (!zoomRaf) zoomRaf = requestAnimationFrame(tickZoom);
+  }
+
+  function animateRotation(target) {
+    rotCurrent = rotCurrent ?? $rotation;
+    rotTarget = ((target % 360) + 360) % 360;
+    if (!rotRaf) rotRaf = requestAnimationFrame(tickRotation);
+  }
+
+  function zoomIn() { animateZoom(Math.min((zoomTarget ?? $zoom) * 1.2, 5)); }
+  function zoomOut() { animateZoom(Math.max((zoomTarget ?? $zoom) / 1.2, 0.1)); }
+  function rotateCCW() { animateRotation((rotTarget ?? $rotation) - 15); }
+  function rotateCW() { animateRotation((rotTarget ?? $rotation) + 15); }
+  function resetView() { animateZoom(1); animateRotation(0); $panX = 0; $panY = 0; }
+
+  function stop(e) { e.stopPropagation(); }
 </script>
 
-<div class="control-group">
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label>Zoom</label>
-  <div class="control-row">
-    <button onclick={zoomOut}>−</button>
-    <span class="zoom-val">{Math.round($zoom * 100)}%</span>
-    <button onclick={zoomIn}>+</button>
-    <button onclick={zoomReset}>Reset</button>
-  </div>
-</div>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="overlay" onpointerdown={stop} onwheel={stop}>
+  <!--
+    L-shape layout:
+           [zoom]
+    [rot] [reset]
+  -->
 
-<div class="control-group">
-  <div class="range-label">
-    <label for="canvas-rotation">Rotation</label>
-    <span class="range-value">{$rotation}°</span>
+  <!-- Zoom stack: right-aligned above reset -->
+  <div class="control-stack vertical">
+    <button class="icon-btn" onclick={zoomIn} aria-label="Zoom in" title="Zoom in">+</button>
+    <span class="val">{Math.round($zoom * 100)}%</span>
+    <button class="icon-btn" onclick={zoomOut} aria-label="Zoom out" title="Zoom out">−</button>
   </div>
-  <div class="control-row">
-    <input id="canvas-rotation" type="range" min="0" max="359" value={$rotation} oninput={(e) => $rotation = Number(e.target.value)} />
-    <button onclick={() => $rotation = 0}>Reset</button>
-  </div>
-</div>
 
-<div class="control-group">
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label>Export size</label>
-  <div class="control-row">
-    <input type="number" min="256" max="8192" step="256" bind:value={$exportWidth} style="width:70px" />
-    <span>x</span>
-    <input type="number" min="256" max="8192" step="256" bind:value={$exportHeight} style="width:70px" />
-  </div>
-</div>
+  <!-- Bottom row: rotation + reset -->
+  <div class="bottom-row">
+    <div class="control-stack horizontal">
+      <button class="icon-btn" onclick={rotateCCW} aria-label="Rotate counter-clockwise" title="Rotate counter-clockwise">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 4v6h6"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+      </button>
+      <span class="val">{Math.round($rotation)}°</span>
+      <button class="icon-btn" onclick={rotateCW} aria-label="Rotate clockwise" title="Rotate clockwise">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/>
+          <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
 
-<div class="control-row">
-  <button onclick={exportSVG}>Export SVG</button>
-  <button onclick={exportPNG}>Export PNG</button>
-  <button onclick={handleCopy}>{copyLabel}</button>
+    <button
+      class="reset-btn"
+      onclick={resetView}
+      aria-label="Reset view"
+      title="Reset view"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <line x1="12" y1="2" x2="12" y2="6"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="2" y1="12" x2="6" y2="12"/>
+        <line x1="18" y1="12" x2="22" y2="12"/>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <style>
-  .zoom-val {
-    font-size: 13px;
-    min-width: 40px;
+  .overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    z-index: 10;
+  }
+
+  .bottom-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .control-stack {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  .control-stack.vertical {
+    flex-direction: column;
+  }
+
+  .control-stack.horizontal {
+    flex-direction: row;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 0;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 300;
+    padding: 0;
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-panel);
+    color: var(--text);
+  }
+
+  .reset-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: var(--text-muted);
+    padding: 0;
+    transition: opacity 0.2s, color 0.15s;
+  }
+
+  .reset-btn:hover {
+    background: var(--bg);
+    color: var(--accent);
+  }
+
+  .val {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+  }
+
+  .vertical .val {
+    padding: 2px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    width: 100%;
     text-align: center;
   }
 
-  .range-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .range-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
+  .horizontal .val {
+    padding: 0 6px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    height: 36px;
+    line-height: 36px;
   }
 </style>

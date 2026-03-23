@@ -1,12 +1,12 @@
 <script>
   import FontSelector from './FontSelector.svelte';
   import MethodSelector from './MethodSelector.svelte';
-  import CanvasControls from './CanvasControls.svelte';
+  import ExportPanel from './ExportPanel.svelte';
 
   let expandedSections = $state({
     'font': true,
     'operations': true,
-    'canvas': true,
+    'export': true,
   });
 
   function toggleSection(key) {
@@ -45,14 +45,14 @@
 
   <section>
     <h3>
-      <button class="section-toggle" onclick={() => toggleSection('canvas')}>
-        <span class="arrow">{expandedSections['canvas'] ? '▾' : '▸'}</span>
-        Canvas & Export
+      <button class="section-toggle" onclick={() => toggleSection('export')}>
+        <span class="arrow">{expandedSections['export'] ? '▾' : '▸'}</span>
+        Export
       </button>
     </h3>
-    {#if expandedSections['canvas']}
+    {#if expandedSections['export']}
       <div class="section-body">
-        <CanvasControls />
+        <ExportPanel />
       </div>
     {/if}
   </section>
