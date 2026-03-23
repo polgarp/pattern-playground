@@ -25,12 +25,14 @@
 {:else}
   {#each method.configSchema as field}
     <div class="control-group">
-      <label for={field.key}>
-        {field.label}
-        {#if field.type === 'range'}
-          : {config[field.key] ?? field.default}
-        {/if}
-      </label>
+      {#if field.type === 'range'}
+        <div class="range-label">
+          <label for={field.key}>{field.label}</label>
+          <span class="range-value">{config[field.key] ?? field.default}</span>
+        </div>
+      {:else}
+        <label for={field.key}>{field.label}</label>
+      {/if}
 
       {#if field.type === 'range'}
         <input
@@ -86,6 +88,19 @@
     color: var(--text-muted);
     font-size: 12px;
     font-style: italic;
+  }
+
+  .range-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .range-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
   }
 
   .segmented-buttons {

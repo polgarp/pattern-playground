@@ -149,7 +149,10 @@
   </div>
 
   <div class="control-group">
-    <label for="font-size">Size: {$fontSize}px</label>
+    <div class="range-label">
+      <label for="font-size">Size</label>
+      <span class="range-value">{$fontSize}px</span>
+    </div>
     <input
       id="font-size"
       type="range"
@@ -194,7 +197,10 @@
 
   {#if $svgMotif}
     <div class="control-group">
-      <label for="svg-scale">Scale: {$fontSize}px</label>
+      <div class="range-label">
+        <label for="svg-scale">Scale</label>
+        <span class="range-value">{$fontSize}px</span>
+      </div>
       <input
         id="svg-scale"
         type="range"
@@ -216,6 +222,19 @@
   .mode-tabs button.active {
     background: var(--accent);
     color: #fff;
+  }
+
+  .range-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .range-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
   }
 
   .font-selector {
@@ -247,6 +266,19 @@
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 0;
+    background: none;
+    color: var(--text);
+  }
+
+  .font-option:hover {
+    background: var(--bg-panel);
+    color: var(--text);
+  }
+
+  .font-option.active {
+    background: var(--bg-panel);
+    color: var(--accent);
+    font-weight: 600;
   }
 
   .no-results {

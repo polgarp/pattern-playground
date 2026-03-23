@@ -31,7 +31,10 @@
 </div>
 
 <div class="control-group">
-  <label for="canvas-rotation">Rotation: {$rotation}°</label>
+  <div class="range-label">
+    <label for="canvas-rotation">Rotation</label>
+    <span class="range-value">{$rotation}°</span>
+  </div>
   <div class="control-row">
     <input id="canvas-rotation" type="range" min="0" max="359" value={$rotation} oninput={(e) => $rotation = Number(e.target.value)} />
     <button onclick={() => $rotation = 0}>Reset</button>
@@ -59,5 +62,18 @@
     font-size: 13px;
     min-width: 40px;
     text-align: center;
+  }
+
+  .range-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .range-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
   }
 </style>

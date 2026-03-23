@@ -207,10 +207,10 @@
             class="drag-handle"
             onpointerdown={(e) => onHandlePointerDown(e, index)}
             aria-label="Reorder step"
-          >⋮⋮</div>
+          ><span class="grip">⋮⋮</span><span class="step-num">{index + 1}</span></div>
           <button class="step-toggle" onclick={() => toggleStep(index)}>
             <span class="arrow">{expandedSteps[index] ? '▾' : '▸'}</span>
-            <span class="step-label">Step {index + 1}: {method?.name ?? 'Unknown'}</span>
+            <span class="step-label">{method?.name ?? 'Unknown'}</span>
           </button>
           <button
             class="visibility-btn"
@@ -229,7 +229,15 @@
               {/if}
             </svg>
           </button>
-          <button class="remove-btn" onclick={() => removeOperation(index)} aria-label="Remove step">x</button>
+          <button class="remove-btn" onclick={() => removeOperation(index)} aria-label="Remove step">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/>
+              <path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
         </div>
 
         {#if expandedSteps[index]}
@@ -252,10 +260,17 @@
 
   {#if $operationChain.length < MAX_OPERATIONS}
     <div class="add-section">
+      {#if $operationChain.length === 0}
+        <span class="add-hint">Add a symmetry operation to start building your pattern</span>
+      {/if}
       <span class="add-label">+ Add operation</span>
       <div class="add-buttons">
         {#each $methodRegistry as m}
-          <button class="add-method-btn" onclick={() => handleAdd(m.id)}>
+          <button
+            class="add-method-btn"
+            onclick={() => handleAdd(m.id)}
+            title={m.description}
+          >
             {m.name}
           </button>
         {/each}
@@ -289,38 +304,59 @@
         </label>
 
         <div class="control-group">
-          <label for="padding-x">Horizontal padding: {$paddingX}px</label>
+          <div class="range-label">
+            <label for="padding-x">Horizontal padding</label>
+            <span class="range-value">{$paddingX}px</span>
+          </div>
           <input id="padding-x" type="range" min="-50" max="100" bind:value={$paddingX} />
         </div>
 
         <div class="control-group">
-          <label for="padding-y">Vertical padding: {$paddingY}px</label>
+          <div class="range-label">
+            <label for="padding-y">Vertical padding</label>
+            <span class="range-value">{$paddingY}px</span>
+          </div>
           <input id="padding-y" type="range" min="-50" max="100" bind:value={$paddingY} />
         </div>
 
         {#if $viewMode === 'tiled'}
           <div class="control-group">
-            <label for="tiles-x">Horizontal tiles: {$tilesX}</label>
+            <div class="range-label">
+              <label for="tiles-x">Horizontal tiles</label>
+              <span class="range-value">{$tilesX}</span>
+            </div>
             <input id="tiles-x" type="range" min="1" max="20" bind:value={$tilesX} />
           </div>
 
           <div class="control-group">
-            <label for="tiles-y">Vertical tiles: {$tilesY}</label>
+            <div class="range-label">
+              <label for="tiles-y">Vertical tiles</label>
+              <span class="range-value">{$tilesY}</span>
+            </div>
             <input id="tiles-y" type="range" min="1" max="20" bind:value={$tilesY} />
           </div>
 
           <div class="control-group">
-            <label for="row-offset">Row offset: {Math.round($rowOffset * 100)}%</label>
+            <div class="range-label">
+              <label for="row-offset">Row offset</label>
+              <span class="range-value">{Math.round($rowOffset * 100)}%</span>
+            </div>
             <input id="row-offset" type="range" min="-1" max="1" step="0.01" value={$rowOffset} oninput={(e) => $rowOffset = snapOffset(Number(e.target.value))} />
           </div>
 
           <div class="control-group">
-            <label for="col-offset">Column offset: {Math.round($colOffset * 100)}%</label>
+            <div class="range-label">
+              <label for="col-offset">Column offset</label>
+              <span class="range-value">{Math.round($colOffset * 100)}%</span>
+            </div>
             <input id="col-offset" type="range" min="-1" max="1" step="0.01" value={$colOffset} oninput={(e) => $colOffset = snapOffset(Number(e.target.value))} />
           </div>
 
           <div class="control-group">
-            <label for="tile-skew">Skew: {Math.round($tileSkew * 100)}%</label>
+            <div class="range-label">
+              <label for="tile-skew">Skew</label>
+              <span class="range-value">{Math.round($tileSkew * 100)}%</span>
+            </div>
             <input id="tile-skew" type="range" min="-1" max="1" step="0.01" value={$tileSkew} oninput={(e) => $tileSkew = snapOffset(Number(e.target.value))} />
           </div>
         {/if}
@@ -373,21 +409,33 @@
 
   .step-header {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 4px;
-    padding: 6px 8px;
+    padding: 6px 0 6px 8px;
     background: var(--bg-input);
   }
 
   .drag-handle {
     cursor: grab;
     color: var(--text-muted);
+    padding: 4px 0;
+    user-select: none;
+    touch-action: none;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .grip {
     font-size: 14px;
     letter-spacing: -3px;
-    padding: 6px 6px;
-    user-select: none;
     line-height: 1;
-    touch-action: none;
+  }
+
+  .step-num {
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
   }
 
   .drag-handle:active {
@@ -400,7 +448,7 @@
 
   .step-toggle {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 6px;
     background: none;
     border: none;
@@ -440,6 +488,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
     padding: 2px;
     color: var(--text-muted);
     background: none;
@@ -457,17 +506,24 @@
   }
 
   .remove-btn {
-    font-size: 12px;
-    padding: 0 6px;
-    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    padding: 4px;
+    margin-left: 2px;
+    margin-right: 6px;
     color: var(--text-muted);
     background: none;
     border: none;
+    opacity: 0.5;
+    transition: opacity 0.15s, color 0.15s;
   }
 
   .remove-btn:hover {
     color: var(--accent);
-    background: var(--bg-input);
+    background: none;
+    opacity: 1;
   }
 
   .step-body {
@@ -484,6 +540,13 @@
     border: 1px dashed var(--border);
     border-radius: var(--radius);
     padding: 8px;
+  }
+
+  .add-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    padding-bottom: 4px;
   }
 
   .add-label {
@@ -517,7 +580,20 @@
   }
 
   .tiling-step .step-header {
-    padding-left: 12px;
+    padding-left: 8px;
+  }
+
+  .range-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .range-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
   }
 
   .toggle-label {

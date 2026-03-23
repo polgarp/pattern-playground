@@ -103,7 +103,7 @@
     flex-shrink: 0;
     background: var(--bg-panel);
     border-right: 1px solid var(--border);
-    overflow-y: auto;
+    overflow-y: scroll;
     overflow-x: hidden;
   }
 
