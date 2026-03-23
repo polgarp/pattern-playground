@@ -16,6 +16,23 @@
     }
     return value;
   }
+
+  function isDisabled(field) {
+    return typeof field.disabled === 'function' ? field.disabled(config) : false;
+  }
+
+  function handleUpdate(field, value) {
+    onupdate(field.key, value);
+    // Apply side-effects from onChange
+    if (typeof field.onChange === 'function') {
+      const updates = field.onChange(value, config);
+      if (updates) {
+        for (const [k, v] of Object.entries(updates)) {
+          onupdate(k, v);
+        }
+      }
+    }
+  }
 </script>
 
 {#if !method}
@@ -24,7 +41,7 @@
   <p class="placeholder">This operation has no configurable settings.</p>
 {:else}
   {#each method.configSchema as field}
-    <div class="control-group">
+    <div class="control-group" class:disabled={isDisabled(field)}>
       {#if field.type === 'range'}
         <div class="range-label">
           <label for={field.key}>{field.label}</label>
@@ -42,10 +59,11 @@
           max={field.max}
           step={field.step ?? 1}
           value={config[field.key] ?? field.default}
+          disabled={isDisabled(field)}
           oninput={(e) => {
             const v = snap(Number(e.target.value), field);
             if (v !== Number(e.target.value)) e.target.value = v;
-            onupdate(field.key, v);
+            handleUpdate(field, v);
           }}
         />
       {:else if field.type === 'number'}
@@ -56,7 +74,8 @@
           max={field.max}
           step={field.step ?? 1}
           value={config[field.key] ?? field.default}
-          oninput={(e) => onupdate(field.key, Number(e.target.value))}
+          disabled={isDisabled(field)}
+          oninput={(e) => handleUpdate(field, Number(e.target.value))}
         />
       {:else if field.type === 'select'}
         <div class="segmented-buttons" role="radiogroup" aria-label={field.label}>
@@ -88,6 +107,11 @@
     color: var(--text-muted);
     font-size: 12px;
     font-style: italic;
+  }
+
+  .control-group.disabled {
+    opacity: 0.4;
+    pointer-events: none;
   }
 
   .range-label {
