@@ -1,5 +1,11 @@
 import { writable, derived } from 'svelte/store';
 
+// Motif mode: 'text' or 'svg'
+export const motifType = writable('text');
+
+// SVG motif data: { markup, viewBox, w, h } or null
+export const svgMotif = writable(null);
+
 export const fontList = writable([]);
 export const fontSearch = writable('');
 export const selectedFont = writable('Arial');
@@ -15,6 +21,30 @@ export const filteredFonts = derived(
     return $fontList.filter(f => f.family.toLowerCase().includes(q)).slice(0, 60);
   }
 );
+
+export function parseSVGUpload(svgText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+  if (!svg) return null;
+
+  // Get dimensions from viewBox or width/height
+  const vb = svg.getAttribute('viewBox');
+  let w, h;
+  if (vb) {
+    const parts = vb.split(/[\s,]+/).map(Number);
+    w = parts[2];
+    h = parts[3];
+  } else {
+    w = parseFloat(svg.getAttribute('width')) || 100;
+    h = parseFloat(svg.getAttribute('height')) || 100;
+  }
+
+  // Extract inner content (everything inside <svg>)
+  const markup = svg.innerHTML;
+
+  return { markup, viewBox: vb || `0 0 ${w} ${h}`, w, h };
+}
 
 let loadedFonts = new Set();
 

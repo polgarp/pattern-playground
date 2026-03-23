@@ -5,7 +5,14 @@
     exportWidth,
     exportHeight,
   } from '../stores/canvas.js';
-  import { exportSVG, exportPNG } from './export.js';
+  import { exportSVG, exportPNG, copySVG } from './export.js';
+
+  let copyLabel = $state('Copy SVG');
+  async function handleCopy() {
+    await copySVG();
+    copyLabel = 'Copied!';
+    setTimeout(() => copyLabel = 'Copy SVG', 1500);
+  }
 
   function zoomIn() { $zoom = Math.min($zoom * 1.2, 5); }
   function zoomOut() { $zoom = Math.max($zoom / 1.2, 0.1); }
@@ -44,6 +51,7 @@
 <div class="control-row">
   <button onclick={exportSVG}>Export SVG</button>
   <button onclick={exportPNG}>Export PNG</button>
+  <button onclick={handleCopy}>{copyLabel}</button>
 </div>
 
 <style>

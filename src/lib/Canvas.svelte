@@ -1,5 +1,5 @@
 <script>
-  import { selectedFont, fontSize, letterInput, fontLoaded } from '../stores/fonts.js';
+  import { selectedFont, fontSize, letterInput, fontLoaded, motifType, svgMotif } from '../stores/fonts.js';
   import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
   import { operationChain, methodRegistry } from '../stores/methods.js';
   import { onMount } from 'svelte';
@@ -13,17 +13,28 @@
 
   // Measure actual text dimensions, re-measure when font/text/size/fontLoaded changes
   let textMetrics = $derived.by(() => {
-    // depend on fontLoaded so we re-measure after font loads
     void $fontLoaded;
     return measureText($letterInput || 'A', $selectedFont, $fontSize);
   });
 
-  // Base motif size (just the text, no padding yet)
-  let motifW = $derived(textMetrics.w);
-  let motifH = $derived(textMetrics.h);
+  // Base motif size depends on mode
+  let motifW = $derived.by(() => {
+    if ($motifType === 'svg' && $svgMotif) {
+      const aspect = $svgMotif.w / $svgMotif.h;
+      return $fontSize * aspect;
+    }
+    return textMetrics.w;
+  });
+
+  let motifH = $derived.by(() => {
+    if ($motifType === 'svg' && $svgMotif) {
+      return $fontSize;
+    }
+    return textMetrics.h;
+  });
 
   // Text position within motif (centered)
-  let textX = $derived(motifW / 2);
+  let textX = $derived(textMetrics.w / 2);
   let textY = $derived(textMetrics.ascent);
 
   // Compose transforms from the operation chain via cartesian product
@@ -251,14 +262,24 @@
     <!-- Define the motif once -->
     <defs>
       <symbol id="motif" overflow="visible">
-        <text
-          x={textX}
-          y={textY}
-          font-family="'{$selectedFont}', sans-serif"
-          font-size={$fontSize}
-          fill="#1a1a1a"
-          text-anchor="middle"
-        >{$letterInput}</text>
+        {#if $motifType === 'svg' && $svgMotif}
+          <svg
+            viewBox={$svgMotif.viewBox}
+            width={motifW}
+            height={motifH}
+          >
+            {@html $svgMotif.markup}
+          </svg>
+        {:else}
+          <text
+            x={textX}
+            y={textY}
+            font-family="'{$selectedFont}', sans-serif"
+            font-size={$fontSize}
+            fill="#1a1a1a"
+            text-anchor="middle"
+          >{$letterInput}</text>
+        {/if}
       </symbol>
       <!-- A single tile with all transforms applied -->
       <symbol id="tile" overflow="visible">

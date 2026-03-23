@@ -1,10 +1,11 @@
 import { get } from 'svelte/store';
-import { selectedFont, fontSize, letterInput } from './fonts.js';
+import { selectedFont, fontSize, letterInput, motifType } from './fonts.js';
 import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew } from './canvas.js';
 import { operationChain } from './methods.js';
 
 // Define all params with their store, type, and default value
 const params = [
+  { key: 'motif', store: motifType, type: 'string' },
   { key: 'font', store: selectedFont, type: 'string' },
   { key: 'size', store: fontSize, type: 'number' },
   { key: 'letter', store: letterInput, type: 'string' },

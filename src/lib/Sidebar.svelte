@@ -19,7 +19,7 @@
     <h3>
       <button class="section-toggle" onclick={() => toggleSection('font')}>
         <span class="arrow">{expandedSections['font'] ? '▾' : '▸'}</span>
-        Font & Letter
+        Motif
       </button>
     </h3>
     {#if expandedSections['font']}
