@@ -33,7 +33,7 @@
     <h3>
       <button class="section-toggle" onclick={() => toggleSection('operations')}>
         <span class="arrow">{expandedSections['operations'] ? '▾' : '▸'}</span>
-        Operations
+        Pattern Pipeline
       </button>
     </h3>
     {#if expandedSections['operations']}

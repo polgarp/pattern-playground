@@ -516,12 +516,6 @@
     background: var(--bg-input);
   }
 
-  .tiling-step {
-    border-style: solid;
-    border-color: var(--accent);
-    border-width: 1px;
-  }
-
   .tiling-step .step-header {
     padding-left: 12px;
   }
