@@ -17,6 +17,8 @@
     const hasHash = window.location.hash.length > 1;
     initUrlState();
 
+    if (!hasHash) aboutOpen = true;
+
     if (hasHash) {
       // Load the font that was restored from the hash
       let font;

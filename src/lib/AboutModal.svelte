@@ -41,6 +41,8 @@
       and zoom with the scroll wheel.
     </p>
 
+    <button class="close-action" onclick={onclose}>Close</button>
+
     <p class="footer">
       Built with Svelte + Vite. All rendering happens in the browser &mdash; no
       server required.
@@ -117,6 +119,22 @@
 
   a:hover {
     text-decoration: underline;
+  }
+
+  .close-action {
+    display: inline-block;
+    padding: 8px 24px;
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius);
+  }
+
+  .close-action:hover {
+    background: var(--accent-hover);
+    color: #fff;
   }
 
   .footer {
