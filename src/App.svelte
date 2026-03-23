@@ -30,7 +30,7 @@
 
 <div class="app-layout">
   <header class="app-header">
-    <h1>Pattern Playground</h1>
+    <h1>Tilecraft</h1>
     <button class="header-btn" onclick={() => aboutOpen = true} aria-label="About">?</button>
   </header>
 

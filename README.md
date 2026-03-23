@@ -1,4 +1,4 @@
-# Pattern Playground
+# Tilecraft
 
 An interactive browser-based tool for exploring repeating pattern techniques from Paul Jackson's book [*How to Make Repeating Patterns*](https://www.laurenceking.com/products/how-to-make-repeat-patterns).
 

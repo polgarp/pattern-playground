@@ -15,10 +15,10 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div class="backdrop" onclick={handleBackdrop}>
-  <div class="modal" role="dialog" aria-modal="true" aria-label="About Pattern Playground">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="About Tilecraft">
     <button class="close-btn" onclick={onclose} aria-label="Close">&times;</button>
 
-    <h2>Pattern Playground</h2>
+    <h2>Tilecraft</h2>
 
     <p>
       An interactive tool for exploring repeating pattern techniques from
