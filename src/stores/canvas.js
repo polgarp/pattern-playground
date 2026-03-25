@@ -17,6 +17,8 @@ export const colOffset = writable(0);
 export const tileSkew = writable(0);
 export const exportWidth = writable(2048);
 export const exportHeight = writable(2048);
+export const sliceActive = writable(false);
+export const sliceBounds = writable({ x: 0, y: 0, w: 0, h: 0 });
 
 // Measures actual text dimensions using a canvas 2D context
 const measureCanvas = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;

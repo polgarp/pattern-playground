@@ -1,8 +1,9 @@
 <script>
   import { selectedFont, fontSize, letterInput, fontLoaded, motifType, svgMotif } from '../stores/fonts.js';
-  import { viewMode, zoom, panX, panY, rotation, showGuides, showOperationGuides, hoveredOperationIndex, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
+  import { viewMode, zoom, panX, panY, rotation, showGuides, showOperationGuides, hoveredOperationIndex, sliceActive, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
   import { operationChain, methodRegistry } from '../stores/methods.js';
   import CanvasControls from './CanvasControls.svelte';
+  import SliceOverlay from './SliceOverlay.svelte';
   import { onMount } from 'svelte';
 
   let containerEl = $state(null);
@@ -229,6 +230,7 @@
   });
 
   function onWheel(e) {
+    if ($sliceActive) return;
     e.preventDefault();
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.min(Math.max($zoom * factor, 0.1), 5);
@@ -244,6 +246,7 @@
   }
 
   function onPointerDown(e) {
+    if ($sliceActive) return;
     if (e.button === 0) {
       isPanning = true;
       lastMouse = { x: e.clientX, y: e.clientY };
@@ -441,7 +444,12 @@
       </g>
     </g>
   </svg>
-  <CanvasControls />
+  {#if !$sliceActive}
+    <CanvasControls />
+  {/if}
+  {#if $sliceActive}
+    <SliceOverlay />
+  {/if}
 </div>
 
 <style>
