@@ -77,19 +77,22 @@ export const glideReflection = {
 
     const len = Math.max(tileW, tileH) * 0.3;
     if (axis === 'horizontal') {
-      // Arrow to the copy position, then a horizontal mirror line at the endpoint
       const endX = cx + glideDist * tileW;
       const endY = cy + refDist * tileH;
+      const midX = (cx + endX) / 2;
+      const midY = (cy + endY) / 2;
       return [
         { type: 'arrow', x1: cx, y1: cy, x2: endX, y2: endY },
-        { type: 'mirrorLine', x1: endX - len, y1: endY, x2: endX + len, y2: endY },
+        { type: 'mirrorLine', x1: midX - len, y1: midY, x2: midX + len, y2: midY },
       ];
     } else {
       const endX = cx + refDist * tileW;
       const endY = cy + glideDist * tileH;
+      const midX = (cx + endX) / 2;
+      const midY = (cy + endY) / 2;
       return [
         { type: 'arrow', x1: cx, y1: cy, x2: endX, y2: endY },
-        { type: 'mirrorLine', x1: endX, y1: endY - len, x2: endX, y2: endY + len },
+        { type: 'mirrorLine', x1: midX, y1: midY - len, x2: midX, y2: midY + len },
       ];
     }
   },

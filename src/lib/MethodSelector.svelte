@@ -190,6 +190,11 @@
   }
 </script>
 
+<label class="toggle-label">
+  <input type="checkbox" bind:checked={$showOperationGuides} />
+  Show operation guides
+</label>
+
 {#if $methodRegistry.length === 0}
   <p class="placeholder">No operations loaded yet.</p>
 {:else}
@@ -307,11 +312,6 @@
         <label class="toggle-label">
           <input type="checkbox" bind:checked={$showGuides} />
           Show tile guides
-        </label>
-
-        <label class="toggle-label">
-          <input type="checkbox" bind:checked={$showOperationGuides} />
-          Show operation guides
         </label>
 
         <div class="control-group">
