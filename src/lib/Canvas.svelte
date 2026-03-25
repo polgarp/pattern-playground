@@ -189,18 +189,42 @@
     return positions;
   });
 
-  // Compute guide geometry for each operation
+  // Compute guide geometry for each operation, with accumulated base transform
   let operationGuides = $derived.by(() => {
     const chain = $operationChain;
     const registry = $methodRegistry;
-    return chain.map((op, idx) => {
-      if (!(op.enabled ?? true)) return { opIndex: idx, elements: [] };
+
+    // First pass: collect each operation's base (index 0) transform
+    const baseTrans = chain.map((op) => {
+      if (!(op.enabled ?? true)) return '';
       const method = registry.find(m => m.id === op.methodId);
-      if (!method?.getGuideElements) return { opIndex: idx, elements: [] };
+      if (!method) return '';
       try {
-        return { opIndex: idx, elements: method.getGuideElements(op.config, motifW, motifH) };
+        const steps = method.getTransforms(op.config, motifW, motifH);
+        return steps.length > 0 ? (steps[0].transform || '') : '';
+      } catch { return ''; }
+    });
+
+    // For each op, its guide needs the base transforms of all LATER operations
+    // (since later ops are prepended / wrap around earlier ones in SVG)
+    const outerTransforms = [];
+    for (let i = chain.length - 1; i >= 0; i--) {
+      // Accumulate from i+1 onward
+      let acc = '';
+      for (let j = i + 1; j < chain.length; j++) {
+        if (baseTrans[j]) acc = `${baseTrans[j]} ${acc}`.trim();
+      }
+      outerTransforms[i] = acc;
+    }
+
+    return chain.map((op, idx) => {
+      if (!(op.enabled ?? true)) return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
+      const method = registry.find(m => m.id === op.methodId);
+      if (!method?.getGuideElements) return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
+      try {
+        return { opIndex: idx, elements: method.getGuideElements(op.config, motifW, motifH), baseTransform: outerTransforms[idx] };
       } catch {
-        return { opIndex: idx, elements: [] };
+        return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
       }
     });
   });
@@ -383,6 +407,7 @@
               {#if guide.elements.length > 0}
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <g
+                  transform={guide.baseTransform || null}
                   onpointerenter={() => $hoveredOperationIndex = guide.opIndex}
                   onpointerleave={() => $hoveredOperationIndex = null}
                 >
