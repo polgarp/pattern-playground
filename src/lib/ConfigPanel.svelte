@@ -78,7 +78,7 @@
           oninput={(e) => handleUpdate(field, Number(e.target.value))}
         />
       {:else if field.type === 'select'}
-        <div class="segmented-buttons" role="radiogroup" aria-label={field.label}>
+        <div class="mode-toggle" role="radiogroup" aria-label={field.label}>
           {#each field.options as opt}
             <button
               class:active={(config[field.key] ?? field.default) === opt.value}
@@ -125,38 +125,6 @@
     font-weight: 600;
     color: var(--text);
     font-variant-numeric: tabular-nums;
-  }
-
-  .segmented-buttons {
-    display: flex;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .segmented-buttons button {
-    flex: 1;
-    padding: 4px 8px;
-    font-size: 12px;
-    border: none;
-    border-right: 1px solid var(--border);
-    background: var(--bg-input);
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .segmented-buttons button:last-child {
-    border-right: none;
-  }
-
-  .segmented-buttons button.active {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .segmented-buttons button:hover:not(.active) {
-    background: var(--border);
-    color: var(--text);
   }
 
   .toggle-label {

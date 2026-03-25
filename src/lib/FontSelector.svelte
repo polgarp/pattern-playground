@@ -95,7 +95,7 @@
   });
 </script>
 
-<div class="control-row mode-tabs">
+<div class="mode-toggle">
   <button class:active={$motifType === 'text'} onclick={() => $motifType = 'text'}>
     Text
   </button>
@@ -214,16 +214,6 @@
 {/if}
 
 <style>
-  .mode-tabs {
-    display: flex;
-    gap: 4px;
-  }
-
-  .mode-tabs button.active {
-    background: var(--accent);
-    color: #fff;
-  }
-
   .range-label {
     display: flex;
     justify-content: space-between;

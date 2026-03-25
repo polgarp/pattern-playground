@@ -58,40 +58,6 @@
     color: var(--text-muted);
   }
 
-  .mode-toggle {
-    display: flex;
-    gap: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .mode-toggle button {
-    flex: 1;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border: none;
-    border-radius: 0;
-    background: var(--bg);
-    color: var(--text-muted);
-  }
-
-  .mode-toggle button:hover {
-    background: var(--bg-panel);
-    color: var(--text);
-  }
-
-  .mode-toggle button.active {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .mode-toggle button.active:hover {
-    background: var(--accent-hover);
-    color: #fff;
-  }
-
   .slice-dims {
     font-size: 13px;
     font-weight: 600;

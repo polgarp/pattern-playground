@@ -295,7 +295,7 @@
 
     {#if tilingExpanded}
       <div class="step-body">
-        <div class="control-row">
+        <div class="mode-toggle">
           <button class:active={$viewMode === 'tile'} onclick={() => $viewMode = 'tile'}>
             Single
           </button>
@@ -622,14 +622,4 @@
     cursor: pointer;
   }
 
-  .control-row {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .control-row button.active {
-    background: var(--accent);
-    color: #fff;
-  }
 </style>
