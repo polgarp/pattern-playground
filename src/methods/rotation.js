@@ -90,4 +90,29 @@ export const rotation = {
     }
     return transforms;
   },
+  getGuideElements(config, tileW, tileH) {
+    const order = config.order ?? 2;
+    const angle = config.angle ?? 180;
+    const startAngle = config.startAngle ?? 0;
+    const distance = config.distance ?? 0;
+    const pointAngle = config.pointAngle ?? 0;
+
+    const rad = (pointAngle * Math.PI) / 180;
+    const cx = tileW / 2 + distance * (tileW / 2) * Math.cos(rad);
+    const cy = tileH / 2 - distance * (tileH / 2) * Math.sin(rad);
+
+    const elements = [{ type: 'point', cx, cy }];
+
+    if (order > 0) {
+      const radius = Math.max(tileW, tileH) * 0.3;
+      elements.push({
+        type: 'arc',
+        cx, cy, radius,
+        startAngle,
+        endAngle: startAngle + angle * order,
+      });
+    }
+
+    return elements;
+  },
 };

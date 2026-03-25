@@ -58,4 +58,27 @@ export const reflection = {
       { transform: copyTransform },
     ];
   },
+  getGuideElements(config, tileW, tileH) {
+    const dist = config.distance ?? 0;
+    const axisAngle = config.axisAngle ?? 0;
+    const cx = tileW / 2;
+    const cy = tileH / 2;
+    const aRad = -axisAngle * Math.PI / 180;
+
+    // Mirror line center is at midpoint of offset
+    const mx = cx + (dist * tileW * Math.cos(aRad)) / 2;
+    const my = cy + (dist * tileH * Math.sin(aRad)) / 2;
+
+    // Mirror line direction is perpendicular to offset
+    const perpAngle = aRad + Math.PI / 2;
+    const len = Math.max(tileW, tileH) * 0.6;
+
+    return [{
+      type: 'mirrorLine',
+      x1: mx - len / 2 * Math.cos(perpAngle),
+      y1: my - len / 2 * Math.sin(perpAngle),
+      x2: mx + len / 2 * Math.cos(perpAngle),
+      y2: my + len / 2 * Math.sin(perpAngle),
+    }];
+  },
 };

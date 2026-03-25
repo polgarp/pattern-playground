@@ -19,6 +19,8 @@
     rowOffset,
     colOffset,
     tileSkew,
+    showOperationGuides,
+    hoveredOperationIndex,
   } from '../stores/canvas.js';
   import ConfigPanel from './ConfigPanel.svelte';
 
@@ -197,10 +199,14 @@
       {#if getPlaceholderIndex() === index && dragIndex > index}
         <div class="drop-placeholder"></div>
       {/if}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="chain-step {getStepClass(index)}"
         class:step-disabled={!(op.enabled ?? true)}
+        class:step-hovered={$hoveredOperationIndex === index}
         bind:this={stepEls[index]}
+        onpointerenter={() => $hoveredOperationIndex = index}
+        onpointerleave={() => $hoveredOperationIndex = null}
       >
         <div class="step-header">
           <div
@@ -300,7 +306,12 @@
 
         <label class="toggle-label">
           <input type="checkbox" bind:checked={$showGuides} />
-          Show guides
+          Show tile guides
+        </label>
+
+        <label class="toggle-label">
+          <input type="checkbox" bind:checked={$showOperationGuides} />
+          Show operation guides
         </label>
 
         <div class="control-group">
@@ -386,6 +397,11 @@
     overflow: hidden;
     transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease;
     background: var(--bg-panel);
+  }
+
+  .chain-step.step-hovered {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
   }
 
   .chain-step.dragging {

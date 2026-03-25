@@ -68,4 +68,29 @@ export const glideReflection = {
       ];
     }
   },
+  getGuideElements(config, tileW, tileH) {
+    const axis = config.axis ?? 'horizontal';
+    const glideDist = config.glideDistance ?? 0.5;
+    const refDist = config.reflectionDistance ?? 1;
+    const cx = tileW / 2;
+    const cy = tileH / 2;
+
+    const len = Math.max(tileW, tileH) * 0.3;
+    if (axis === 'horizontal') {
+      // Arrow to the copy position, then a horizontal mirror line at the endpoint
+      const endX = cx + glideDist * tileW;
+      const endY = cy + refDist * tileH;
+      return [
+        { type: 'arrow', x1: cx, y1: cy, x2: endX, y2: endY },
+        { type: 'mirrorLine', x1: endX - len, y1: endY, x2: endX + len, y2: endY },
+      ];
+    } else {
+      const endX = cx + refDist * tileW;
+      const endY = cy + glideDist * tileH;
+      return [
+        { type: 'arrow', x1: cx, y1: cy, x2: endX, y2: endY },
+        { type: 'mirrorLine', x1: endX, y1: endY - len, x2: endX, y2: endY + len },
+      ];
+    }
+  },
 };

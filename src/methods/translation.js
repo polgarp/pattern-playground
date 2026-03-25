@@ -59,4 +59,16 @@ export const translation = {
     }
     return transforms;
   },
+  getGuideElements(config, tileW, tileH) {
+    const dx = (config.dx ?? 0.5) * tileW;
+    const dy = (config.dy ?? 0) * tileH;
+    const cx = tileW / 2;
+    const cy = tileH / 2;
+
+    return [{
+      type: 'arrow',
+      x1: cx, y1: cy,
+      x2: cx + dx, y2: cy + dy,
+    }];
+  },
 };

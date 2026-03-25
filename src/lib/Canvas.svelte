@@ -1,6 +1,6 @@
 <script>
   import { selectedFont, fontSize, letterInput, fontLoaded, motifType, svgMotif } from '../stores/fonts.js';
-  import { viewMode, zoom, panX, panY, rotation, showGuides, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
+  import { viewMode, zoom, panX, panY, rotation, showGuides, showOperationGuides, hoveredOperationIndex, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
   import { operationChain, methodRegistry } from '../stores/methods.js';
   import CanvasControls from './CanvasControls.svelte';
   import { onMount } from 'svelte';
@@ -40,13 +40,15 @@
 
   // Compose transforms from the operation chain via cartesian product
   // Operations use motif dimensions for their calculations
+  // Each transform tracks which operations created it (origins array)
   let transforms = $derived.by(() => {
     const chain = $operationChain;
     const registry = $methodRegistry;
-    if (chain.length === 0) return [{ transform: '' }];
+    if (chain.length === 0) return [{ transform: '', origins: [] }];
 
-    let result = [{ transform: '' }];
-    for (const op of chain) {
+    let result = [{ transform: '', origins: [] }];
+    for (let opIdx = 0; opIdx < chain.length; opIdx++) {
+      const op = chain[opIdx];
       if (!(op.enabled ?? true)) continue;
       const method = registry.find(m => m.id === op.methodId);
       if (!method) continue;
@@ -58,9 +60,14 @@
       }
       const next = [];
       for (const existing of result) {
-        for (const step of stepTransforms) {
+        for (let si = 0; si < stepTransforms.length; si++) {
+          const step = stepTransforms[si];
           const combined = `${step.transform} ${existing.transform}`.trim();
-          next.push({ transform: combined });
+          // si === 0 is the original/base from this operation; si > 0 are copies
+          const origins = si === 0
+            ? [...existing.origins]
+            : [...existing.origins, opIdx];
+          next.push({ transform: combined, origins });
         }
       }
       result = next;
@@ -181,6 +188,35 @@
     return positions;
   });
 
+  // Compute guide geometry for each operation
+  let operationGuides = $derived.by(() => {
+    const chain = $operationChain;
+    const registry = $methodRegistry;
+    return chain.map((op, idx) => {
+      if (!(op.enabled ?? true)) return { opIndex: idx, elements: [] };
+      const method = registry.find(m => m.id === op.methodId);
+      if (!method?.getGuideElements) return { opIndex: idx, elements: [] };
+      try {
+        return { opIndex: idx, elements: method.getGuideElements(op.config, motifW, motifH) };
+      } catch {
+        return { opIndex: idx, elements: [] };
+      }
+    });
+  });
+
+  // SVG arc path helper for rotation guides
+  function arcPath(cx, cy, r, startDeg, endDeg) {
+    const s = startDeg * Math.PI / 180;
+    const e = endDeg * Math.PI / 180;
+    const x1 = cx + r * Math.cos(s);
+    const y1 = cy + r * Math.sin(s);
+    const x2 = cx + r * Math.cos(e);
+    const y2 = cy + r * Math.sin(e);
+    const sweep = ((endDeg - startDeg) % 360 + 360) % 360;
+    const largeArc = sweep > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
+  }
+
   onMount(() => {
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
@@ -282,16 +318,9 @@
           >{$letterInput}</text>
         {/if}
       </symbol>
-      <!-- A single tile with all transforms applied -->
-      <symbol id="tile" overflow="visible">
-        <g transform="translate({tileOffsetX}, {tileOffsetY})">
-          {#each transforms as t}
-            <g transform={t.transform}>
-              <use href="#motif" />
-            </g>
-          {/each}
-        </g>
-      </symbol>
+      <marker id="guide-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+        <path d="M0,0 L8,3 L0,6" fill="rgba(255,63,49,0.6)" />
+      </marker>
     </defs>
 
     <g transform="translate({$panX}, {$panY}) scale({$zoom}) rotate({$rotation})">
@@ -301,11 +330,23 @@
         {#if $viewMode === 'tiled'}
           <g>
             {#each visibleTiles as pos}
-              <use href="#tile" x={pos.x} y={pos.y} />
+              <g transform="translate({pos.x + tileOffsetX}, {pos.y + tileOffsetY})">
+                {#each transforms as t}
+                  <g transform={t.transform} opacity={$hoveredOperationIndex !== null && t.origins.includes($hoveredOperationIndex) ? 0.15 : 1}>
+                    <use href="#motif" />
+                  </g>
+                {/each}
+              </g>
             {/each}
           </g>
         {:else}
-          <use href="#tile" />
+          <g transform="translate({tileOffsetX}, {tileOffsetY})">
+            {#each transforms as t}
+              <g transform={t.transform} opacity={$hoveredOperationIndex !== null && t.origins.includes($hoveredOperationIndex) ? 0.15 : 1}>
+                <use href="#motif" />
+              </g>
+            {/each}
+          </g>
         {/if}
 
         <!-- Guides -->
@@ -330,6 +371,72 @@
               stroke-dasharray="{4 / $zoom}"
             />
           {/if}
+        {/if}
+
+        <!-- Operation guides -->
+        {#if $showOperationGuides}
+          <g transform="translate({tileOffsetX}, {tileOffsetY})">
+            {#each operationGuides as guide}
+              {#if guide.elements.length > 0}
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <g
+                  onpointerenter={() => $hoveredOperationIndex = guide.opIndex}
+                  onpointerleave={() => $hoveredOperationIndex = null}
+                >
+                  {#each guide.elements as el}
+                    {#if el.type === 'point'}
+                      <circle cx={el.cx} cy={el.cy} r={4 / $zoom} fill="rgba(255,63,49,0.6)" />
+                      <!-- Hit area -->
+                      <circle cx={el.cx} cy={el.cy} r={12 / $zoom} fill="transparent" pointer-events="fill" />
+                    {:else if el.type === 'arc'}
+                      <path
+                        d={arcPath(el.cx, el.cy, el.radius, el.startAngle, el.endAngle)}
+                        fill="none"
+                        stroke="rgba(255,63,49,0.6)"
+                        stroke-width={1.5 / $zoom}
+                      />
+                      <!-- Hit area -->
+                      <path
+                        d={arcPath(el.cx, el.cy, el.radius, el.startAngle, el.endAngle)}
+                        fill="none"
+                        stroke="transparent"
+                        stroke-width={12 / $zoom}
+                        pointer-events="stroke"
+                      />
+                    {:else if el.type === 'arrow'}
+                      <line
+                        x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2}
+                        stroke="rgba(255,63,49,0.6)"
+                        stroke-width={1.5 / $zoom}
+                        marker-end="url(#guide-arrow)"
+                      />
+                      <!-- Hit area -->
+                      <line
+                        x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2}
+                        stroke="transparent"
+                        stroke-width={12 / $zoom}
+                        pointer-events="stroke"
+                      />
+                    {:else if el.type === 'mirrorLine'}
+                      <line
+                        x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2}
+                        stroke="rgba(255,63,49,0.6)"
+                        stroke-width={1.5 / $zoom}
+                        stroke-dasharray="{4 / $zoom}"
+                      />
+                      <!-- Hit area -->
+                      <line
+                        x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2}
+                        stroke="transparent"
+                        stroke-width={12 / $zoom}
+                        pointer-events="stroke"
+                      />
+                    {/if}
+                  {/each}
+                </g>
+              {/if}
+            {/each}
+          </g>
         {/if}
       </g>
     </g>
