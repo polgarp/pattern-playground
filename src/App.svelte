@@ -32,6 +32,7 @@
 <div class="app-layout">
   <header class="app-header">
     <h1>Tilecraft</h1>
+    <span class="header-by">by <a href="https://polgarp.com" target="_blank" rel="noopener">polgarp</a></span>
     <button class="header-btn" onclick={() => aboutOpen = true} aria-label="About">?</button>
   </header>
 
@@ -72,7 +73,22 @@
     font-weight: 600;
     letter-spacing: 0.5px;
     color: #fff;
+  }
+
+  .header-by {
     flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .header-by a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+  }
+
+  .header-by a:hover {
+    color: #fff;
+    text-decoration: underline;
   }
 
   .header-btn {

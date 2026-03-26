@@ -43,6 +43,7 @@
     <button class="close-action" onclick={onclose}>Close</button>
 
     <p class="footer">
+      &copy; 2026 Tilecraft by <a href="https://polgarp.com" target="_blank" rel="noopener">polgarp</a>.
       Built with Svelte + Vite. All rendering happens in the browser &mdash; no
       server required.
     </p>
