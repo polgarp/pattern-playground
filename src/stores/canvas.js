@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-export const viewMode = writable('tiled'); // 'tile' or 'tiled'
+export const viewMode = writable('tile'); // 'tile' or 'tiled'
 export const zoom = writable(1);
 export const panX = writable(0);
 export const panY = writable(0);

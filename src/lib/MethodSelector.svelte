@@ -286,7 +286,7 @@
   </div>
 
   {#if $operationChain.length < MAX_OPERATIONS}
-    <div class="add-section">
+    <div class="add-section" class:add-section-highlight={$operationChain.length === 0}>
       {#if $operationChain.length === 0}
         <span class="add-hint">Add a symmetry operation to start building your pattern</span>
       {/if}
@@ -575,6 +575,18 @@
     border: 1px dashed var(--border);
     border-radius: var(--radius);
     padding: 8px;
+  }
+
+  .add-section-highlight {
+    border-color: var(--accent);
+    border-style: solid;
+    box-shadow: 0 0 0 1px var(--accent);
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 1px var(--accent); }
+    50% { box-shadow: 0 0 0 3px rgba(255, 63, 49, 0.25); }
   }
 
   .add-hint {
