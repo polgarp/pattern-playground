@@ -23,7 +23,7 @@
     <p>
       An interactive tool for exploring repeating pattern techniques based on
       Paul Jackson's
-      <a href="https://www.laurenceking.com/products/how-to-make-repeating-patterns" target="_blank" rel="noopener">
+      <a href="https://www.laurenceking.com/products/how-to-make-repeat-patterns" target="_blank" rel="noopener">
         <em>"How to Make Repeating Patterns"</em></a>.
     </p>
 
