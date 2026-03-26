@@ -34,12 +34,9 @@
     if (zoomCurrent === null) zoomCurrent = $zoom;
     const diff = zoomTarget - zoomCurrent;
     if (Math.abs(diff) < EPSILON * 0.01) {
-      // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
-      if (panTargetX === null) {
-        const ratio = zoomTarget / zoomCurrent;
-        $panX *= ratio;
-        $panY *= ratio;
-      }
+      const ratio = zoomTarget / zoomCurrent;
+      $panX *= ratio;
+      $panY *= ratio;
       $zoom = zoomTarget;
       zoomTarget = null;
       zoomCurrent = null;
@@ -48,12 +45,9 @@
     }
     const prevZoom = zoomCurrent;
     zoomCurrent += diff * LERP;
-    // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
-    if (panTargetX === null) {
-      const ratio = zoomCurrent / prevZoom;
-      $panX *= ratio;
-      $panY *= ratio;
-    }
+    const ratio = zoomCurrent / prevZoom;
+    $panX *= ratio;
+    $panY *= ratio;
     $zoom = zoomCurrent;
     zoomRaf = requestAnimationFrame(tickZoom);
   }
@@ -66,14 +60,11 @@
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
     if (Math.abs(diff) < EPSILON) {
-      // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
-      if (panTargetX === null) {
-        const delta = (rotTarget - rotCurrent) * Math.PI / 180;
-        const cos = Math.cos(delta), sin = Math.sin(delta);
-        const px = $panX, py = $panY;
-        $panX = px * cos - py * sin;
-        $panY = px * sin + py * cos;
-      }
+      const delta = (rotTarget - rotCurrent) * Math.PI / 180;
+      const cos = Math.cos(delta), sin = Math.sin(delta);
+      const px = $panX, py = $panY;
+      $panX = px * cos - py * sin;
+      $panY = px * sin + py * cos;
       $rotation = ((rotTarget % 360) + 360) % 360;
       rotTarget = null;
       rotCurrent = null;
@@ -82,14 +73,11 @@
     }
     const prevRot = rotCurrent;
     rotCurrent += diff * LERP;
-    // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
-    if (panTargetX === null) {
-      const delta = (rotCurrent - prevRot) * Math.PI / 180;
-      const cos = Math.cos(delta), sin = Math.sin(delta);
-      const px = $panX, py = $panY;
-      $panX = px * cos - py * sin;
-      $panY = px * sin + py * cos;
-    }
+    const delta = (rotCurrent - prevRot) * Math.PI / 180;
+    const cos = Math.cos(delta), sin = Math.sin(delta);
+    const px = $panX, py = $panY;
+    $panX = px * cos - py * sin;
+    $panY = px * sin + py * cos;
     $rotation = ((rotCurrent % 360) + 360) % 360;
     rotRaf = requestAnimationFrame(tickRotation);
   }
