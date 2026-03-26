@@ -7,6 +7,11 @@ export const operationChain = writable([]);
 
 export const MAX_OPERATIONS = 8;
 
+export const methodRegistryMap = derived(
+  [methodRegistry],
+  ([$registry]) => new Map($registry.map(m => [m.id, m]))
+);
+
 export const methodCategories = derived(
   [methodRegistry],
   ([$registry]) => {
@@ -38,7 +43,7 @@ export function getDefaultConfig(method) {
 export function addOperation(methodId) {
   operationChain.update(chain => {
     if (chain.length >= MAX_OPERATIONS) return chain;
-    const method = get(methodRegistry).find(m => m.id === methodId);
+    const method = get(methodRegistryMap).get(methodId);
     return [...chain, { methodId, config: getDefaultConfig(method), enabled: true }];
   });
 }
@@ -50,7 +55,7 @@ export function removeOperation(index) {
 export function setOperationMethod(index, methodId) {
   operationChain.update(chain => {
     const newChain = [...chain];
-    const method = get(methodRegistry).find(m => m.id === methodId);
+    const method = get(methodRegistryMap).get(methodId);
     newChain[index] = { methodId, config: getDefaultConfig(method) };
     return newChain;
   });

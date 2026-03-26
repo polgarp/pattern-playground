@@ -1,7 +1,7 @@
 <script>
   import { selectedFont, fontSize, letterInput, fontLoaded, motifType, svgMotif } from '../stores/fonts.js';
   import { viewMode, zoom, panX, panY, rotation, showGuides, showOperationGuides, hoveredOperationIndex, sliceActive, tilesX, tilesY, paddingX, paddingY, rowOffset, colOffset, tileSkew, measureText } from '../stores/canvas.js';
-  import { operationChain, methodRegistry } from '../stores/methods.js';
+  import { operationChain, methodRegistryMap } from '../stores/methods.js';
   import CanvasControls from './CanvasControls.svelte';
   import SliceOverlay from './SliceOverlay.svelte';
   import { onMount } from 'svelte';
@@ -39,31 +39,36 @@
   let textX = $derived(textMetrics.w / 2);
   let textY = $derived(textMetrics.ascent);
 
+  // Shared: call getTransforms once per operation, reused by both transforms and operationGuides
+  let operationSteps = $derived.by(() => {
+    const chain = $operationChain;
+    const registry = $methodRegistryMap;
+    return chain.map((op) => {
+      if (!(op.enabled ?? true)) return null;
+      const method = registry.get(op.methodId);
+      if (!method) return null;
+      try {
+        return { method, stepTransforms: method.getTransforms(op.config, motifW, motifH) };
+      } catch {
+        return null;
+      }
+    });
+  });
+
   // Compose transforms from the operation chain via cartesian product
-  // Operations use motif dimensions for their calculations
   // Each transform tracks which operations created it (origins array)
   let transforms = $derived.by(() => {
-    const chain = $operationChain;
-    const registry = $methodRegistry;
-    if (chain.length === 0) return [{ transform: '', origins: [] }];
+    if (operationSteps.every(s => s === null)) return [{ transform: '', origins: [] }];
 
     let result = [{ transform: '', origins: [] }];
-    for (let opIdx = 0; opIdx < chain.length; opIdx++) {
-      const op = chain[opIdx];
-      if (!(op.enabled ?? true)) continue;
-      const method = registry.find(m => m.id === op.methodId);
-      if (!method) continue;
-      let stepTransforms;
-      try {
-        stepTransforms = method.getTransforms(op.config, motifW, motifH);
-      } catch {
-        continue;
-      }
+    for (let opIdx = 0; opIdx < operationSteps.length; opIdx++) {
+      const step = operationSteps[opIdx];
+      if (!step) continue;
       const next = [];
       for (const existing of result) {
-        for (let si = 0; si < stepTransforms.length; si++) {
-          const step = stepTransforms[si];
-          const combined = `${step.transform} ${existing.transform}`.trim();
+        for (let si = 0; si < step.stepTransforms.length; si++) {
+          const st = step.stepTransforms[si];
+          const combined = `${st.transform} ${existing.transform}`.trim();
           // si === 0 is the original/base from this operation; si > 0 are copies
           const origins = si === 0
             ? [...existing.origins]
@@ -76,11 +81,13 @@
     return result;
   });
 
-  // Parse SVG transform string into a DOMMatrix
+  // Parse SVG transform string into a DOMMatrix (cached)
   // Handles rotate(a, cx, cy) which DOMMatrix doesn't support natively
+  const matrixCache = new Map();
   function svgTransformToMatrix(str) {
+    if (!str) return new DOMMatrix();
+    if (matrixCache.has(str)) return matrixCache.get(str);
     let matrix = new DOMMatrix();
-    if (!str) return matrix;
     const re = /(translate|scale|rotate|skewX|skewY|matrix)\s*\(([^)]+)\)/g;
     let match;
     while ((match = re.exec(str)) !== null) {
@@ -113,11 +120,13 @@
           break;
       }
     }
+    matrixCache.set(str, matrix);
     return matrix;
   }
 
   // Compute bounding box of all transforms applied to the motif
   let tileBounds = $derived.by(() => {
+    matrixCache.clear();
     const corners = [
       [0, 0], [motifW, 0], [motifW, motifH], [0, motifH]
     ];
@@ -192,24 +201,16 @@
   // Compute guide geometry for each operation, with accumulated base transform
   let operationGuides = $derived.by(() => {
     const chain = $operationChain;
-    const registry = $methodRegistry;
 
-    // First pass: collect each operation's base (index 0) transform
-    const baseTrans = chain.map((op) => {
-      if (!(op.enabled ?? true)) return '';
-      const method = registry.find(m => m.id === op.methodId);
-      if (!method) return '';
-      try {
-        const steps = method.getTransforms(op.config, motifW, motifH);
-        return steps.length > 0 ? (steps[0].transform || '') : '';
-      } catch { return ''; }
-    });
+    // Extract base (index 0) transform from already-computed operationSteps
+    const baseTrans = operationSteps.map(s =>
+      s?.stepTransforms?.length > 0 ? (s.stepTransforms[0].transform || '') : ''
+    );
 
     // For each op, its guide needs the base transforms of all LATER operations
     // (since later ops are prepended / wrap around earlier ones in SVG)
     const outerTransforms = [];
     for (let i = chain.length - 1; i >= 0; i--) {
-      // Accumulate from i+1 onward
       let acc = '';
       for (let j = i + 1; j < chain.length; j++) {
         if (baseTrans[j]) acc = `${baseTrans[j]} ${acc}`.trim();
@@ -218,11 +219,11 @@
     }
 
     return chain.map((op, idx) => {
-      if (!(op.enabled ?? true)) return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
-      const method = registry.find(m => m.id === op.methodId);
-      if (!method?.getGuideElements) return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
+      const s = operationSteps[idx];
+      if (!s) return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
+      if (!s.method?.getGuideElements) return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
       try {
-        return { opIndex: idx, elements: method.getGuideElements(op.config, motifW, motifH), baseTransform: outerTransforms[idx] };
+        return { opIndex: idx, elements: s.method.getGuideElements(op.config, motifW, motifH), baseTransform: outerTransforms[idx] };
       } catch {
         return { opIndex: idx, elements: [], baseTransform: outerTransforms[idx] };
       }

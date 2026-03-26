@@ -1,6 +1,7 @@
 <script>
   import {
     methodRegistry,
+    methodRegistryMap,
     operationChain,
     addOperation,
     removeOperation,
@@ -49,13 +50,27 @@
   }
 
   function getMethod(methodId) {
-    return $methodRegistry.find(m => m.id === methodId) || null;
+    return $methodRegistryMap.get(methodId) || null;
   }
 
   function handleAdd(methodId) {
     addOperation(methodId);
     expandedSteps = { ...expandedSteps, [$operationChain.length - 1]: true };
   }
+
+  // Clean up drag state and window listeners
+  function cleanupDrag() {
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', onDragEnd);
+    if (dragClone) { dragClone.remove(); dragClone = null; }
+    dragIndex = null;
+    dragOverIndex = null;
+  }
+
+  // Cancel drag if component is destroyed mid-drag
+  $effect(() => {
+    return () => cleanupDrag();
+  });
 
   function onHandlePointerDown(e, index) {
     e.preventDefault();
@@ -167,6 +182,7 @@
       }
     }
 
+    // Reset drag state (listeners already removed above)
     dragIndex = null;
     dragOverIndex = null;
   }
@@ -597,19 +613,6 @@
 
   .tiling-step .step-header {
     padding-left: 8px;
-  }
-
-  .range-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .range-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
   }
 
   .toggle-label {

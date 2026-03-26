@@ -17,6 +17,14 @@
   let zoomCurrent = null;
   let rotCurrent = null;
 
+  // Cancel pending animations on component destroy (e.g. when slice mode activates)
+  $effect(() => {
+    return () => {
+      if (zoomRaf) { cancelAnimationFrame(zoomRaf); zoomRaf = null; }
+      if (rotRaf) { cancelAnimationFrame(rotRaf); rotRaf = null; }
+    };
+  });
+
   function tickZoom() {
     if (zoomTarget === null) return;
     if (zoomCurrent === null) zoomCurrent = $zoom;

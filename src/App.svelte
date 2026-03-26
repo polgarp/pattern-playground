@@ -6,6 +6,7 @@
   import { initMethods } from './methods/index.js';
   import { initUrlState } from './stores/urlState.js';
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
 
   let aboutOpen = $state(false);
 
@@ -21,9 +22,7 @@
 
     if (hasHash) {
       // Load the font that was restored from the hash
-      let font;
-      selectedFont.subscribe(v => font = v)();
-      await loadFont(font);
+      await loadFont(get(selectedFont));
     } else {
       pickRandomFont();
     }

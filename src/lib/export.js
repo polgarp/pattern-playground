@@ -3,7 +3,15 @@ import { exportWidth, exportHeight } from '../stores/canvas.js';
 import { selectedFont } from '../stores/fonts.js';
 
 // Fetch Google Font CSS, download all font files, and return CSS with inlined data URIs
+const fontStyleCache = new Map();
 async function embedFontStyle(family) {
+  if (fontStyleCache.has(family)) return fontStyleCache.get(family);
+  const promise = embedFontStyleUncached(family);
+  fontStyleCache.set(family, promise);
+  return promise;
+}
+
+async function embedFontStyleUncached(family) {
   try {
     const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`;
     const cssRes = await fetch(cssUrl);
@@ -21,7 +29,10 @@ async function embedFontStyle(family) {
       const fontBuf = await fontRes.arrayBuffer();
       const bytes = new Uint8Array(fontBuf);
       let binary = '';
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const CHUNK = 8192;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
       const base64 = btoa(binary);
       const format = fontUrl.includes('.woff2') ? 'woff2' : 'woff';
       cssText = cssText.replaceAll(fontUrl, `data:font/${format};base64,${base64}`);

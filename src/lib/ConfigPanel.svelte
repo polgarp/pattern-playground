@@ -114,19 +114,6 @@
     pointer-events: none;
   }
 
-  .range-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .range-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
-
   .toggle-label {
     display: flex;
     align-items: center;

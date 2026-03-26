@@ -92,6 +92,8 @@ export async function loadFont(family) {
     fontLoaded.set(true);
     return;
   }
+  // Add immediately to prevent concurrent calls from duplicating work
+  loadedFonts.add(family);
   fontLoaded.set(false);
   try {
     const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`;
@@ -100,12 +102,11 @@ export async function loadFont(family) {
     link.href = url;
     document.head.appendChild(link);
 
-    // Wait for font to be ready
     await document.fonts.load(`16px "${family}"`);
-    loadedFonts.add(family);
     fontLoaded.set(true);
   } catch (e) {
     console.error('Failed to load font:', e);
+    loadedFonts.delete(family); // allow retry on failure
     fontLoaded.set(true); // fallback
   }
 }

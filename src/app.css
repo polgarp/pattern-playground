@@ -86,6 +86,19 @@ label {
   gap: 8px;
 }
 
+.range-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.range-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 h3 {
   font-size: 13px;
   text-transform: uppercase;

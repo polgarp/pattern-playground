@@ -17,15 +17,6 @@ export const rotation = {
       }),
     },
     {
-      key: 'startAngle',
-      label: 'Motif Rotation',
-      type: 'range',
-      default: 0,
-      min: 0,
-      max: 360,
-      step: 1,
-    },
-    {
       key: 'angle',
       label: 'Copy Angle',
       type: 'range',
@@ -55,6 +46,15 @@ export const rotation = {
       max: 359,
       step: 1,
       disabled: (cfg) => (cfg.order ?? 2) === 0,
+    },
+    {
+      key: 'startAngle',
+      label: 'Motif Rotation',
+      type: 'range',
+      default: 0,
+      min: 0,
+      max: 360,
+      step: 1,
     },
   ],
   getTransforms(config, tileW, tileH) {

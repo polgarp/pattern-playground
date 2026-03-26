@@ -36,8 +36,6 @@
     showDropdown = false;
     highlightIndex = -1;
     loadFont(family);
-    // Blur so next click triggers focus→open cycle
-    requestAnimationFrame(() => inputEl?.blur());
   }
 
   function openDropdown() {
@@ -60,13 +58,12 @@
   }
 
   function handleBlur(e) {
-    setTimeout(() => {
-      showDropdown = false;
-      highlightIndex = -1;
-      // Reset to selected font if search didn't pick anything
-      inputValue = $selectedFont;
-      $fontSearch = '';
-    }, 200);
+    // Dropdown items use preventDefault() on mousedown, so blur only fires
+    // when focus moves genuinely outside the component — close immediately.
+    showDropdown = false;
+    highlightIndex = -1;
+    inputValue = $selectedFont;
+    $fontSearch = '';
   }
 
   function handleKeydown(e) {
@@ -195,6 +192,7 @@
         value={inputValue}
         oninput={handleInput}
         onfocus={handleFocus}
+        onclick={openDropdown}
         onblur={handleBlur}
         onkeydown={handleKeydown}
         placeholder="Search fonts..."
@@ -299,19 +297,6 @@
 {/if}
 
 <style>
-  .range-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .range-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
-
   .font-selector {
     position: relative;
   }
