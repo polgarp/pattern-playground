@@ -10,6 +10,9 @@
   let zoomRaf = null;
   let rotTarget = null;
   let rotRaf = null;
+  let panRaf = null;
+  let panTargetX = null;
+  let panTargetY = null;
 
   const LERP = 0.08;
   const EPSILON = 0.01;
@@ -22,6 +25,7 @@
     return () => {
       if (zoomRaf) { cancelAnimationFrame(zoomRaf); zoomRaf = null; }
       if (rotRaf) { cancelAnimationFrame(rotRaf); rotRaf = null; }
+      if (panRaf) { cancelAnimationFrame(panRaf); panRaf = null; }
     };
   });
 
@@ -30,10 +34,12 @@
     if (zoomCurrent === null) zoomCurrent = $zoom;
     const diff = zoomTarget - zoomCurrent;
     if (Math.abs(diff) < EPSILON * 0.01) {
-      // Adjust pan to keep viewport center fixed
-      const ratio = zoomTarget / zoomCurrent;
-      $panX *= ratio;
-      $panY *= ratio;
+      // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
+      if (panTargetX === null) {
+        const ratio = zoomTarget / zoomCurrent;
+        $panX *= ratio;
+        $panY *= ratio;
+      }
       $zoom = zoomTarget;
       zoomTarget = null;
       zoomCurrent = null;
@@ -42,10 +48,12 @@
     }
     const prevZoom = zoomCurrent;
     zoomCurrent += diff * LERP;
-    // Adjust pan to keep viewport center fixed
-    const ratio = zoomCurrent / prevZoom;
-    $panX *= ratio;
-    $panY *= ratio;
+    // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
+    if (panTargetX === null) {
+      const ratio = zoomCurrent / prevZoom;
+      $panX *= ratio;
+      $panY *= ratio;
+    }
     $zoom = zoomCurrent;
     zoomRaf = requestAnimationFrame(tickZoom);
   }
@@ -58,12 +66,14 @@
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
     if (Math.abs(diff) < EPSILON) {
-      // Adjust pan to keep viewport center fixed
-      const delta = (rotTarget - rotCurrent) * Math.PI / 180;
-      const cos = Math.cos(delta), sin = Math.sin(delta);
-      const px = $panX, py = $panY;
-      $panX = px * cos - py * sin;
-      $panY = px * sin + py * cos;
+      // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
+      if (panTargetX === null) {
+        const delta = (rotTarget - rotCurrent) * Math.PI / 180;
+        const cos = Math.cos(delta), sin = Math.sin(delta);
+        const px = $panX, py = $panY;
+        $panX = px * cos - py * sin;
+        $panY = px * sin + py * cos;
+      }
       $rotation = ((rotTarget % 360) + 360) % 360;
       rotTarget = null;
       rotCurrent = null;
@@ -72,14 +82,39 @@
     }
     const prevRot = rotCurrent;
     rotCurrent += diff * LERP;
-    // Adjust pan to keep viewport center fixed
-    const delta = (rotCurrent - prevRot) * Math.PI / 180;
-    const cos = Math.cos(delta), sin = Math.sin(delta);
-    const px = $panX, py = $panY;
-    $panX = px * cos - py * sin;
-    $panY = px * sin + py * cos;
+    // Adjust pan to keep viewport center fixed (skip if pan is animating separately)
+    if (panTargetX === null) {
+      const delta = (rotCurrent - prevRot) * Math.PI / 180;
+      const cos = Math.cos(delta), sin = Math.sin(delta);
+      const px = $panX, py = $panY;
+      $panX = px * cos - py * sin;
+      $panY = px * sin + py * cos;
+    }
     $rotation = ((rotCurrent % 360) + 360) % 360;
     rotRaf = requestAnimationFrame(tickRotation);
+  }
+
+  function tickPan() {
+    if (panTargetX === null) return;
+    const dx = panTargetX - $panX;
+    const dy = panTargetY - $panY;
+    if (Math.abs(dx) < EPSILON && Math.abs(dy) < EPSILON) {
+      $panX = panTargetX;
+      $panY = panTargetY;
+      panTargetX = null;
+      panTargetY = null;
+      panRaf = null;
+      return;
+    }
+    $panX += dx * LERP;
+    $panY += dy * LERP;
+    panRaf = requestAnimationFrame(tickPan);
+  }
+
+  function animatePan(tx, ty) {
+    panTargetX = tx;
+    panTargetY = ty;
+    if (!panRaf) panRaf = requestAnimationFrame(tickPan);
   }
 
   function animateZoom(target) {
@@ -98,7 +133,7 @@
   function zoomOut() { animateZoom(Math.max((zoomTarget ?? $zoom) / 1.2, 0.1)); }
   function rotateCCW() { animateRotation((rotTarget ?? $rotation) - 15); }
   function rotateCW() { animateRotation((rotTarget ?? $rotation) + 15); }
-  function resetView() { animateZoom(1); animateRotation(0); $panX = 0; $panY = 0; }
+  function resetView() { animateZoom(1); animateRotation(0); animatePan(0, 0); }
 
   function stop(e) { e.stopPropagation(); }
 </script>
