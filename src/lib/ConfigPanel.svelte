@@ -45,7 +45,7 @@
       {#if field.type === 'range'}
         <div class="range-label">
           <label for={field.key}>{field.label}</label>
-          <span class="range-value">{config[field.key] ?? field.default}</span>
+          <span class="range-value">{config[field.key] ?? field.default}{field.unit ?? ''}</span>
         </div>
       {:else}
         <label for={field.key}>{field.label}</label>
@@ -112,15 +112,5 @@
   .control-group.disabled {
     opacity: 0.4;
     pointer-events: none;
-  }
-
-  .toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    text-transform: none;
-    color: var(--text);
-    cursor: pointer;
   }
 </style>

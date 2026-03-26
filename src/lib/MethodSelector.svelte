@@ -206,7 +206,7 @@
   }
 </script>
 
-<label class="toggle-label">
+<label class="toggle-label guides-toggle">
   <input type="checkbox" bind:checked={$showOperationGuides} />
   Show operation guides
 </label>
@@ -399,6 +399,10 @@
     font-style: italic;
   }
 
+  .guides-toggle {
+    margin-bottom: -4px;
+  }
+
   .chain-list {
     display: flex;
     flex-direction: column;
@@ -443,7 +447,7 @@
     display: flex;
     align-items: baseline;
     gap: 4px;
-    padding: 6px 0 6px 8px;
+    padding: 6px 4px 6px 8px;
     background: var(--bg-input);
   }
 
@@ -544,7 +548,6 @@
     align-self: center;
     padding: 4px;
     margin-left: 2px;
-    margin-right: 6px;
     color: var(--text-muted);
     background: none;
     border: none;
@@ -559,10 +562,10 @@
   }
 
   .step-body {
-    padding: 8px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .add-section {
@@ -582,7 +585,7 @@
   }
 
   .add-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -597,7 +600,7 @@
 
   .add-method-btn {
     font-size: 12px;
-    padding: 3px 10px;
+    padding: 5px 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: none;
@@ -612,17 +615,8 @@
   }
 
   .tiling-step .step-header {
-    padding-left: 8px;
+    padding-left: 12px;
   }
 
-  .toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    text-transform: none;
-    color: var(--text);
-    cursor: pointer;
-  }
 
 </style>

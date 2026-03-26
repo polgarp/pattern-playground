@@ -260,7 +260,7 @@
       <div class="svg-preview">
         {@html `<svg viewBox="${$svgMotif.viewBox}" width="80" height="80" xmlns="http://www.w3.org/2000/svg">${$svgMotif.markup}</svg>`}
       </div>
-      <span class="upload-info">{$svgMotif.w} x {$svgMotif.h}</span>
+      <span class="upload-info">{$svgMotif.w} &times; {$svgMotif.h}</span>
     {:else}
       <span class="upload-prompt">Drop SVG here or click to browse</span>
     {/if}

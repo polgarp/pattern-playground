@@ -46,10 +46,14 @@
   </div>
 {/if}
 
-<div class="control-row">
-  <button onclick={handleExportSVG}>Export SVG</button>
-  <button onclick={handleExportPNG}>Export PNG</button>
-  <button onclick={handleCopy}>{copyLabel}</button>
+<div class="control-group">
+  <!-- svelte-ignore a11y_label_has_associated_control -->
+  <label>Download</label>
+  <div class="control-row">
+    <button onclick={handleExportSVG}>SVG</button>
+    <button onclick={handleExportPNG}>PNG</button>
+    <button onclick={handleCopy}>{copyLabel}</button>
+  </div>
 </div>
 
 <style>

@@ -30,6 +30,7 @@ export const glideReflection = {
       min: -180,
       max: 180,
       step: 1,
+      unit: '°',
     },
   ],
   getTransforms(config, tileW, tileH) {

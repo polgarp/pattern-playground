@@ -12,6 +12,7 @@ export const reflection = {
       min: -90,
       max: 90,
       step: 1,
+      unit: '°',
     },
     {
       key: 'distance',
@@ -30,6 +31,7 @@ export const reflection = {
       min: -180,
       max: 180,
       step: 1,
+      unit: '°',
     },
   ],
   getTransforms(config, tileW, tileH) {

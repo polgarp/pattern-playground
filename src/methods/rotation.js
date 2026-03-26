@@ -24,6 +24,7 @@ export const rotation = {
       min: 0,
       max: 360,
       step: 1,
+      unit: '°',
       snap: (cfg) => cfg.order > 0 ? 360 / (cfg.order + 1) : 0,
       disabled: (cfg) => (cfg.order ?? 2) === 0,
     },
@@ -39,12 +40,13 @@ export const rotation = {
     },
     {
       key: 'pointAngle',
-      label: 'Pivot Direction',
+      label: 'Orientation',
       type: 'range',
       default: 0,
       min: 0,
       max: 359,
       step: 1,
+      unit: '°',
       disabled: (cfg) => (cfg.order ?? 2) === 0,
     },
     {
@@ -55,6 +57,7 @@ export const rotation = {
       min: 0,
       max: 360,
       step: 1,
+      unit: '°',
     },
   ],
   getTransforms(config, tileW, tileH) {
