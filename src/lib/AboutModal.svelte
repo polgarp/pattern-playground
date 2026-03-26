@@ -21,17 +21,16 @@
     <h2>Tilecraft</h2>
 
     <p>
-      An interactive tool for exploring repeating pattern techniques from
+      An interactive tool for exploring repeating pattern techniques based on
       Paul Jackson's
       <a href="https://www.laurenceking.com/products/how-to-make-repeating-patterns" target="_blank" rel="noopener">
         <em>"How to Make Repeating Patterns"</em></a>.
     </p>
 
     <p>
-      Choose a motif &mdash; type a letter with any Google Font, or upload an SVG.
+      Choose a motif: a letter or an SVG.
       Build a pattern pipeline by chaining symmetry operations (rotation,
-      translation, reflection, glide reflection), then tile the result with
-      adjustable padding, row/column offsets, and skew. Reorder, toggle, or
+      translation, reflection, glide reflection), then tile the result. Reorder, toggle, or
       remove steps at any time.
     </p>
 
