@@ -13,31 +13,100 @@
 
   let showDropdown = $state(false);
   let inputEl = $state(null);
+  let dropdownEl = $state(null);
   let fileInputEl = $state(null);
   let dragOver = $state(false);
   let uploadError = $state('');
+  let highlightIndex = $state(-1);
+  let inputValue = $state('');
 
   const MAX_SVG_SIZE = 500 * 1024; // 500KB
+
+  // Sync input display with selected font when dropdown is closed
+  $effect(() => {
+    if (!showDropdown) {
+      inputValue = $selectedFont;
+    }
+  });
 
   function selectFont(family) {
     $selectedFont = family;
     $fontSearch = '';
+    inputValue = family;
     showDropdown = false;
+    highlightIndex = -1;
     loadFont(family);
+    // Blur so next click triggers focus→open cycle
+    requestAnimationFrame(() => inputEl?.blur());
   }
 
-  function handleInput() {
+  function openDropdown() {
+    if (showDropdown) return;
     showDropdown = true;
+    highlightIndex = -1;
+    // Select all text so typing replaces it
+    requestAnimationFrame(() => inputEl?.select());
+  }
+
+  function handleInput(e) {
+    inputValue = e.target.value;
+    $fontSearch = inputValue;
+    showDropdown = true;
+    highlightIndex = -1;
   }
 
   function handleFocus() {
-    showDropdown = true;
+    openDropdown();
   }
 
   function handleBlur(e) {
     setTimeout(() => {
       showDropdown = false;
+      highlightIndex = -1;
+      // Reset to selected font if search didn't pick anything
+      inputValue = $selectedFont;
+      $fontSearch = '';
     }, 200);
+  }
+
+  function handleKeydown(e) {
+    const fonts = $filteredFonts;
+    if (!showDropdown) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        openDropdown();
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlightIndex = Math.min(highlightIndex + 1, fonts.length - 1);
+      scrollHighlightIntoView();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlightIndex = Math.max(highlightIndex - 1, 0);
+      scrollHighlightIntoView();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlightIndex >= 0 && highlightIndex < fonts.length) {
+        selectFont(fonts[highlightIndex].family);
+      } else if (fonts.length > 0) {
+        selectFont(fonts[0].family);
+      }
+    } else if (e.key === 'Escape') {
+      showDropdown = false;
+      inputValue = $selectedFont;
+      $fontSearch = '';
+      inputEl?.blur();
+    }
+  }
+
+  function scrollHighlightIntoView() {
+    requestAnimationFrame(() => {
+      const item = dropdownEl?.querySelector('.font-option.highlighted');
+      if (item) item.scrollIntoView({ block: 'nearest' });
+    });
   }
 
   function handleSVGFile(file) {
@@ -118,25 +187,41 @@
 
   <div class="control-group font-selector">
     <label for="font-combo">Font</label>
-    <input
-      id="font-combo"
-      type="text"
-      bind:this={inputEl}
-      value={showDropdown ? $fontSearch : $selectedFont}
-      oninput={(e) => { $fontSearch = e.target.value; handleInput(); }}
-      onfocus={handleFocus}
-      onblur={handleBlur}
-      placeholder="Search fonts..."
-      autocomplete="off"
-    />
+    <div class="combo-wrapper">
+      <input
+        id="font-combo"
+        type="text"
+        bind:this={inputEl}
+        value={inputValue}
+        oninput={handleInput}
+        onfocus={handleFocus}
+        onblur={handleBlur}
+        onkeydown={handleKeydown}
+        placeholder="Search fonts..."
+        autocomplete="off"
+        role="combobox"
+        aria-expanded={showDropdown}
+        aria-autocomplete="list"
+      />
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="combo-chevron" onmousedown={(e) => { e.preventDefault(); inputEl?.focus(); }}>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3.5 L5 6.5 L8 3.5" />
+        </svg>
+      </div>
+    </div>
 
     {#if showDropdown}
-      <div class="font-dropdown">
-        {#each $filteredFonts as font}
+      <div class="font-dropdown" bind:this={dropdownEl} role="listbox">
+        {#each $filteredFonts as font, i}
           <button
             class="font-option"
             class:active={font.family === $selectedFont}
+            class:highlighted={i === highlightIndex}
             onmousedown={(e) => { e.preventDefault(); selectFont(font.family); }}
+            onpointerenter={() => highlightIndex = i}
+            role="option"
+            aria-selected={font.family === $selectedFont}
           >
             {font.family}
           </button>
@@ -231,6 +316,27 @@
     position: relative;
   }
 
+  .combo-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .combo-wrapper input {
+    width: 100%;
+    padding-right: 28px;
+  }
+
+  .combo-chevron {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
   .font-dropdown {
     position: absolute;
     top: 100%;
@@ -260,15 +366,21 @@
     color: var(--text);
   }
 
-  .font-option:hover {
+  .font-option:hover,
+  .font-option.highlighted {
     background: var(--bg-panel);
     color: var(--text);
   }
 
   .font-option.active {
-    background: var(--bg-panel);
     color: var(--accent);
     font-weight: 600;
+  }
+
+  .font-option.active:hover,
+  .font-option.active.highlighted {
+    background: var(--bg-panel);
+    color: var(--accent);
   }
 
   .no-results {
