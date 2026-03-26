@@ -35,9 +35,16 @@ async function embedFontStyle(family) {
 }
 
 function injectFontStyle(svgClone, fontFaceRule) {
+  // Strip properties Inkscape doesn't understand
+  const cleaned = fontFaceRule
+    .replace(/font-display:\s*swap;?\s*/g, '')
+    .replace(/unicode-range:[^;]+;?\s*/g, '');
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
   const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-  style.textContent = fontFaceRule;
-  svgClone.insertBefore(style, svgClone.firstChild);
+  style.setAttribute('type', 'text/css');
+  style.textContent = cleaned;
+  defs.appendChild(style);
+  svgClone.insertBefore(defs, svgClone.firstChild);
 }
 
 function getSliceViewBox(bounds) {
@@ -76,6 +83,15 @@ function makeEmbedSVG(sliceBounds) {
   clone.removeAttribute('viewBox');
   clone.setAttribute('viewBox', `${vbX} ${vbY} ${w} ${h}`);
 
+  // Remove guide/overlay elements (markers, guide lines, hit areas)
+  for (const el of clone.querySelectorAll('[marker-end], [stroke-dasharray], [pointer-events]')) {
+    el.remove();
+  }
+  // Remove invisible transparent hit-area elements
+  for (const el of clone.querySelectorAll('[fill="transparent"], [stroke="transparent"]')) {
+    el.remove();
+  }
+
   // Inline <use> references so SVG works standalone
   const defs = clone.querySelector('defs');
   const symbols = {};
@@ -101,28 +117,23 @@ function makeEmbedSVG(sliceBounds) {
   // Remove defs (symbols no longer needed)
   if (defs) defs.remove();
 
+  // Remove any empty <g> elements left behind
+  for (const g of [...clone.querySelectorAll('g')]) {
+    if (g.children.length === 0 && !g.textContent.trim()) g.remove();
+  }
+
   return clone;
 }
 
 export async function exportSVG(sliceBounds = null) {
-  const svgEl = document.querySelector('#pattern-canvas svg');
-  if (!svgEl) return;
-
-  const clone = svgEl.cloneNode(true);
-
-  if (sliceBounds) {
-    const vb = getSliceViewBox(sliceBounds);
-    clone.setAttribute('width', vb.w);
-    clone.setAttribute('height', vb.h);
-    clone.removeAttribute('viewBox');
-    clone.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-  }
+  const clone = makeEmbedSVG(sliceBounds);
+  if (!clone) return;
 
   const fontRule = await embedFontStyle(get(selectedFont));
   if (fontRule) injectFontStyle(clone, fontRule);
 
   const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(clone);
+  const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(clone);
   const blob = new Blob([svgString], { type: 'image/svg+xml' });
   download(blob, 'pattern.svg');
 }
