@@ -1,6 +1,6 @@
 # Tilecraft
 
-An interactive browser-based tool for exploring repeating pattern techniques based on Paul Jackson's book [*How to Make Repeating Patterns*](https://www.laurenceking.com/products/how-to-make-repeat-patterns).
+An interactive browser-based tool for exploring repeating pattern techniques based on Paul Jackson's book [*How to Make Repeat Patterns*](https://www.laurenceking.com/products/how-to-make-repeat-patterns).
 
 Choose a motif: a letter or an SVG. Build a pattern pipeline by chaining symmetry operations (rotation, translation, reflection, glide reflection), then tile the resuts. Reorder, toggle, or remove steps at any time.
 
