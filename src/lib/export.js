@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 import { exportWidth, exportHeight } from '../stores/canvas.js';
-import { selectedFont } from '../stores/fonts.js';
+import { selectedFont, letterInput, motifType } from '../stores/fonts.js';
+import { operationChain } from '../stores/methods.js';
 
 // Fetch Google Font CSS, download all font files, and return CSS with inlined data URIs
 const fontStyleCache = new Map();
@@ -146,7 +147,7 @@ export async function exportSVG(sliceBounds = null) {
   const serializer = new XMLSerializer();
   const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(clone);
   const blob = new Blob([svgString], { type: 'image/svg+xml' });
-  download(blob, 'pattern.svg');
+  download(blob, buildFilename('svg'));
 }
 
 export async function copySVG(sliceBounds = null) {
@@ -203,10 +204,63 @@ export async function exportPNG(sliceBounds = null) {
     URL.revokeObjectURL(url);
 
     canvas.toBlob((blob) => {
-      if (blob) download(blob, 'pattern.png');
+      if (blob) download(blob, buildFilename('png'));
     }, 'image/png');
   };
   img.src = url;
+}
+
+const OP_ABBR = {
+  rotation: 'rot',
+  translation: 'shift',
+  reflection: 'flip',
+  glideReflection: 'glide',
+};
+
+function buildFilename(ext) {
+  const type = get(motifType);
+  const chain = get(operationChain).filter(op => op.enabled ?? true);
+
+  // Motif part
+  let motif;
+  if (type === 'svg') {
+    motif = 'svg';
+  } else {
+    const letter = get(letterInput) || 'x';
+    const font = get(selectedFont).replace(/\s+/g, '');
+    motif = `${letter}-${font}`;
+  }
+
+  // Operations part — abbreviate each, deduplicate consecutive same ops with count
+  let ops = '';
+  if (chain.length > 0) {
+    const abbrs = chain.map(op => OP_ABBR[op.methodId] || op.methodId.slice(0, 4));
+    // Collapse runs: [rot, rot, flip] → "rot×2-flip"
+    const parts = [];
+    let i = 0;
+    while (i < abbrs.length) {
+      let count = 1;
+      while (i + count < abbrs.length && abbrs[i + count] === abbrs[i]) count++;
+      parts.push(count > 1 ? `${abbrs[i]}x${count}` : abbrs[i]);
+      i += count;
+    }
+    ops = parts.join('-');
+  }
+
+  // Short fingerprint from config values so different settings → different names
+  const configStr = chain.map(op =>
+    Object.values(op.config).join(',')
+  ).join(';');
+  let hash = 0;
+  for (let i = 0; i < configStr.length; i++) {
+    hash = ((hash << 5) - hash + configStr.charCodeAt(i)) | 0;
+  }
+  const tag = Math.abs(hash).toString(36).slice(0, 4);
+
+  const segments = ['tilecraft', motif];
+  if (ops) segments.push(ops);
+  segments.push(tag);
+  return segments.join('-') + '.' + ext;
 }
 
 function download(blob, filename) {
