@@ -18,8 +18,8 @@ export const reflection = {
       label: 'Distance',
       type: 'range',
       default: 0,
-      min: -5,
-      max: 5,
+      min: -10,
+      max: 10,
       step: 0.01,
     },
     {
